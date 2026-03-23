@@ -33,6 +33,14 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# python backend
+backend/.venv/
+backend/chroma_db/
+backend/uploads/
+backend/__pycache__/
+backend/agent/__pycache__/
+*.pyc
+
 # vercel
 .vercel
 
