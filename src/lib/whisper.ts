@@ -176,7 +176,7 @@ async function callWhisper(
   apiKey: string,
   filename: string
 ): Promise<WhisperResponse> {
-  const blob = new Blob([audioBuffer]);
+  const blob = new Blob([new Uint8Array(audioBuffer)]);
   const formData = new FormData();
   formData.append("file", blob, filename);
   formData.append("model", "whisper-1");
