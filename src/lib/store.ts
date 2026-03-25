@@ -4,6 +4,9 @@ import { persist } from "zustand/middleware";
 export type DateRange = "7d" | "14d" | "30d" | "custom";
 
 interface AppState {
+  isAuthenticated: boolean;
+  setAuthenticated: (v: boolean) => void;
+
   apiToken: string | null;
   setApiToken: (token: string | null) => void;
 
@@ -29,6 +32,9 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
+      isAuthenticated: false,
+      setAuthenticated: (v) => set({ isAuthenticated: v }),
+
       apiToken: null,
       setApiToken: (token) => set({ apiToken: token }),
 
@@ -54,6 +60,7 @@ export const useAppStore = create<AppState>()(
     {
       name: "vydalitics-ai-storage",
       partialize: (state) => ({
+        isAuthenticated: state.isAuthenticated,
         apiToken: state.apiToken,
         openaiApiKey: state.openaiApiKey,
         dateRange: state.dateRange,
