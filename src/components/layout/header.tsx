@@ -18,7 +18,6 @@ export function Header() {
   const apiToken = useAppStore((s) => s.apiToken);
   const serverTokenAvailable = useAppStore((s) => s.serverTokenAvailable);
   const setAuthenticated = useAppStore((s) => s.setAuthenticated);
-  const isAdmin = useAppStore((s) => s.isAdmin);
   const { apiFetch } = useApi();
   const [accountInfo, setAccountInfo] = useState<{
     plan: string;
@@ -111,21 +110,19 @@ export function Header() {
           </div>
         )}
 
-        {isAdmin && (
-          <Link
-            href="/admin"
-            className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-              pathname === "/admin"
-                ? "bg-primary/10 text-primary"
-                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
-            )}
-            title="Pannello Admin"
-          >
-            <Shield className="h-4 w-4" />
-            Admin
-          </Link>
-        )}
+        <Link
+          href="/admin"
+          className={cn(
+            "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+            pathname === "/admin"
+              ? "bg-primary/10 text-primary"
+              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+          )}
+          title="Pannello Admin"
+        >
+          <Shield className="h-4 w-4" />
+          Admin
+        </Link>
 
         <button
           onClick={() => setAuthenticated(false)}

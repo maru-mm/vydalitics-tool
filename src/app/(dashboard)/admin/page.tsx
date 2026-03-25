@@ -18,8 +18,99 @@ import {
 } from "lucide-react";
 import type { VidalyticsVideo } from "@/lib/vidalytics-api";
 
+function AdminLogin({ onSuccess }: { onSuccess: (password: string) => void }) {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!password) return;
+    setError("");
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
+      const data = await res.json();
+
+      if (data.ok && data.role === "admin") {
+        onSuccess(password);
+      } else if (data.ok) {
+        setError("Questa password non ha accesso admin.");
+        setPassword("");
+      } else {
+        setError(data.error || "Password errata");
+        setPassword("");
+      }
+    } catch {
+      setError("Errore di connessione");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center py-24">
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
+            <Shield className="h-8 w-8 text-primary" />
+          </div>
+          <h2 className="text-xl font-bold text-foreground">
+            Pannello Amministratore
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Inserisci la password admin per accedere alla configurazione VSL
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password Admin"
+              autoFocus
+              className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+            />
+          </div>
+
+          {error && (
+            <div className="flex items-center gap-2 rounded-lg bg-danger/5 border border-danger/20 px-3 py-2 text-sm text-danger">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading || !password}
+            className="w-full py-3 px-4 rounded-xl bg-primary text-primary-foreground font-medium hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Verifica...
+              </span>
+            ) : (
+              "Accedi come Admin"
+            )}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const isAdmin = useAppStore((s) => s.isAdmin);
+  const setAdmin = useAppStore((s) => s.setAdmin);
   const adminSessionPassword = useAppStore((s) => s.adminSessionPassword);
   const setAdminSessionPassword = useAppStore((s) => s.setAdminSessionPassword);
   const { apiFetch, isConfigured } = useApi();
@@ -37,15 +128,16 @@ export default function AdminPage() {
   const [needsPassword, setNeedsPassword] = useState(false);
 
   useEffect(() => {
-    if (!isConfigured) return;
+    if (!isConfigured || !isAdmin) return;
     setVideosLoading(true);
     apiFetch<VidalyticsVideo[]>("/videos")
       .then(setVideos)
       .catch(() => {})
       .finally(() => setVideosLoading(false));
-  }, [apiFetch, isConfigured]);
+  }, [apiFetch, isConfigured, isAdmin]);
 
   useEffect(() => {
+    if (!isAdmin) return;
     setConfigLoading(true);
     fetch("/api/admin/vsl-config")
       .then((r) => r.json())
@@ -58,7 +150,7 @@ export default function AdminPage() {
       })
       .catch(() => {})
       .finally(() => setConfigLoading(false));
-  }, []);
+  }, [isAdmin]);
 
   const filteredVideos = useMemo(() => {
     if (!searchQuery) return videos;
@@ -142,20 +234,13 @@ export default function AdminPage() {
     setPasswordInput("");
   };
 
+  const handleAdminLogin = (password: string) => {
+    setAdmin(true);
+    setAdminSessionPassword(password);
+  };
+
   if (!isAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center py-32">
-        <div className="rounded-2xl bg-danger/10 p-6 mb-4">
-          <Shield className="h-12 w-12 text-danger" />
-        </div>
-        <h2 className="text-xl font-bold text-foreground mb-2">
-          Accesso non autorizzato
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Questa pagina è riservata agli amministratori.
-        </p>
-      </div>
-    );
+    return <AdminLogin onSuccess={handleAdminLogin} />;
   }
 
   const loading = videosLoading || configLoading;
