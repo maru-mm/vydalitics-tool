@@ -37,12 +37,12 @@ export async function GET(
         const msg =
           whisperErr instanceof Error
             ? whisperErr.message
-            : "Errore trascrizione Whisper";
+            : "Whisper transcription error";
         return NextResponse.json(
           {
             error: msg,
             mediaUrl: e.mediaUrl,
-            hint: "La trascrizione Whisper è fallita. Puoi riprovare o verificare la chiave OpenAI.",
+            hint: "Whisper transcription failed. You can retry or check your OpenAI API key.",
           },
           { status: 500 }
         );
@@ -54,7 +54,7 @@ export async function GET(
       return NextResponse.json(
         {
           error:
-            "Sottotitoli non disponibili. Configura la chiave API OpenAI nelle Impostazioni per attivare la trascrizione automatica Whisper.",
+            "Captions unavailable. Configure the OpenAI API key in Settings to enable automatic Whisper transcription.",
           mediaUrl: e.mediaUrl,
           needsOpenAI: true,
         },
@@ -65,7 +65,7 @@ export async function GET(
     const msg =
       e instanceof Error
         ? e.message
-        : "Errore nel recupero dello script";
+        : "Error fetching script";
     return NextResponse.json({ error: msg }, { status: 404 });
   }
 }

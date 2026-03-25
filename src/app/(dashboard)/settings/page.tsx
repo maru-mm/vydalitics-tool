@@ -107,9 +107,9 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Impostazioni</h1>
+        <h1 className="text-2xl font-bold">Settings</h1>
         <p className="text-muted-foreground">
-          Configura la connessione al tuo account Vidalytics
+          Configure the connection to your Vidalytics account
         </p>
       </div>
 
@@ -121,12 +121,12 @@ export default function SettingsPage() {
           <div>
             <h2 className="font-semibold">API Token</h2>
             <p className="text-sm text-muted-foreground">
-              Genera il token da Account Settings → Global Settings in Vidalytics
+              Generate the token from Account Settings → Global Settings in Vidalytics
             </p>
           </div>
           {apiToken && (
             <Badge variant="success" >
-              Connesso
+              Connected
             </Badge>
           )}
         </div>
@@ -135,7 +135,7 @@ export default function SettingsPage() {
           <div className="relative">
             <Input
               id="api-token"
-              label="Token API Vidalytics"
+              label="Vidalytics API Token"
               type={showToken ? "text" : "password"}
               value={tokenInput}
               onChange={(e) => {
@@ -156,13 +156,13 @@ export default function SettingsPage() {
           {testResult === "success" && (
             <div className="flex items-center gap-2 rounded-lg bg-success/10 p-3 text-sm text-success">
               <Check className="h-4 w-4" />
-              Connessione riuscita! Token salvato.
+              Connection successful! Token saved.
             </div>
           )}
           {testResult === "error" && (
             <div className="flex items-center gap-2 rounded-lg bg-danger/10 p-3 text-sm text-danger">
               <AlertCircle className="h-4 w-4" />
-              Token non valido o errore di connessione. Riprova.
+              Invalid token or connection error. Please try again.
             </div>
           )}
 
@@ -173,16 +173,16 @@ export default function SettingsPage() {
               ) : (
                 <Shield className="h-4 w-4" />
               )}
-              Testa Connessione
+              Test Connection
             </Button>
             <Button variant="secondary" onClick={handleSave} disabled={!tokenInput.trim()}>
               <Check className="h-4 w-4" />
-              Salva
+              Save
             </Button>
             {apiToken && (
               <Button variant="danger" onClick={handleRemove}>
                 <Trash2 className="h-4 w-4" />
-                Rimuovi
+                Remove
               </Button>
             )}
           </div>
@@ -196,16 +196,16 @@ export default function SettingsPage() {
               <Gauge className="h-5 w-5 text-accent" />
             </div>
             <div>
-              <h2 className="font-semibold">Informazioni Account</h2>
+              <h2 className="font-semibold">Account Information</h2>
               <p className="text-sm text-muted-foreground">
-                Dettagli del tuo piano e utilizzo API
+                Your plan details and API usage
               </p>
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-lg border border-border p-4">
-              <p className="text-sm text-muted-foreground">Piano</p>
+              <p className="text-sm text-muted-foreground">Plan</p>
               <p className="mt-1 text-lg font-semibold capitalize">{accountInfo.plan}</p>
             </div>
             <div className="rounded-lg border border-border p-4">
@@ -216,7 +216,7 @@ export default function SettingsPage() {
 
           <div className="mt-4 rounded-lg border border-border p-4">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-muted-foreground">Utilizzo API mensile</p>
+              <p className="text-sm text-muted-foreground">Monthly API Usage</p>
               <p className="text-sm font-medium">
                 {accountInfo.api_requests_used.toLocaleString()} / {accountInfo.api_requests_limit.toLocaleString()}
               </p>
@@ -227,7 +227,7 @@ export default function SettingsPage() {
                 style={{ width: `${Math.min(usagePercent, 100)}%` }}
               />
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">{usagePercent}% utilizzato</p>
+            <p className="mt-1 text-xs text-muted-foreground">{usagePercent}% used</p>
           </div>
         </Card>
       )}
@@ -240,12 +240,12 @@ export default function SettingsPage() {
           <div>
             <h2 className="font-semibold">OpenAI API Key</h2>
             <p className="text-sm text-muted-foreground">
-              Necessaria per la trascrizione automatica delle VSL con Whisper
+              Required for automatic VSL transcription with Whisper
             </p>
           </div>
           {openaiApiKey && (
             <Badge variant="success">
-              Configurata
+              Configured
             </Badge>
           )}
         </div>
@@ -254,7 +254,7 @@ export default function SettingsPage() {
           <div className="relative">
             <Input
               id="openai-key"
-              label="Chiave API OpenAI"
+              label="OpenAI API Key"
               type={showOpenai ? "text" : "password"}
               value={openaiInput}
               onChange={(e) => {
@@ -275,53 +275,53 @@ export default function SettingsPage() {
           {openaiSaved && (
             <div className="flex items-center gap-2 rounded-lg bg-success/10 p-3 text-sm text-success">
               <Check className="h-4 w-4" />
-              Chiave OpenAI salvata!
+              OpenAI key saved!
             </div>
           )}
 
           <div className="flex gap-3">
             <Button onClick={handleSaveOpenai} disabled={!openaiInput.trim()}>
               <Check className="h-4 w-4" />
-              Salva
+              Save
             </Button>
             {openaiApiKey && (
               <Button variant="danger" onClick={handleRemoveOpenai}>
                 <Trash2 className="h-4 w-4" />
-                Rimuovi
+                Remove
               </Button>
             )}
           </div>
 
           <div className="rounded-lg border border-border bg-secondary/30 p-4">
-            <p className="text-sm font-medium mb-2">A cosa serve?</p>
+            <p className="text-sm font-medium mb-2">What is this for?</p>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Quando una VSL non ha sottotitoli attivati su Vidalytics, il sistema
-              scarica automaticamente l&apos;audio e usa <strong className="text-foreground">OpenAI Whisper</strong> per
-              generare una trascrizione completa secondo per secondo.
-              Questo permette l&apos;analisi AI anche su video senza caption.
+              When a VSL doesn&apos;t have subtitles enabled on Vidalytics, the system
+              automatically downloads the audio and uses <strong className="text-foreground">OpenAI Whisper</strong> to
+              generate a full second-by-second transcription.
+              This enables AI analysis even on videos without captions.
             </p>
           </div>
         </div>
       </Card>
 
       <Card>
-        <h2 className="font-semibold mb-3">Come ottenere il Token API</h2>
+        <h2 className="font-semibold mb-3">How to Get the API Token</h2>
         <ol className="space-y-2 text-sm text-muted-foreground">
           <li className="flex gap-2">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs text-white font-semibold">1</span>
-            Accedi a <a href="https://app.vidalytics.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">app.vidalytics.com</a>
+            Log in to <a href="https://app.vidalytics.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">app.vidalytics.com</a>
           </li>
           <li className="flex gap-2">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs text-white font-semibold">2</span>
-            Vai su Account Settings → Global Settings
+            Go to Account Settings → Global Settings
           </li>
           <li className="flex gap-2">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs text-white font-semibold">3</span>
-            Crea un nuovo API Token e copialo qui
+            Create a new API Token and paste it here
           </li>
           <li className="flex gap-2">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs text-white font-semibold">4</span>
-            Richiede piano <strong className="text-foreground">Premium</strong> o superiore
+            Requires <strong className="text-foreground">Premium</strong> plan or higher
           </li>
         </ol>
       </Card>

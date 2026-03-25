@@ -6,17 +6,18 @@ import { useApi } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 import {
   Shield,
-  Eye,
-  EyeOff,
   Search,
   Loader2,
   Save,
   CheckCircle2,
-  Video,
   AlertTriangle,
   Lock,
+  FolderOpen,
+  Folder,
+  FolderCheck,
+  Video,
 } from "lucide-react";
-import type { VidalyticsVideo } from "@/lib/vidalytics-api";
+import type { Folder as FolderType } from "@/lib/vidalytics-api";
 
 function AdminLogin({ onSuccess }: { onSuccess: (password: string) => void }) {
   const [password, setPassword] = useState("");
@@ -40,14 +41,14 @@ function AdminLogin({ onSuccess }: { onSuccess: (password: string) => void }) {
       if (data.ok && data.role === "admin") {
         onSuccess(password);
       } else if (data.ok) {
-        setError("Questa password non ha accesso admin.");
+        setError("This password does not have admin access.");
         setPassword("");
       } else {
-        setError(data.error || "Password errata");
+        setError(data.error || "Incorrect password");
         setPassword("");
       }
     } catch {
-      setError("Errore di connessione");
+      setError("Connection error");
     } finally {
       setLoading(false);
     }
@@ -61,10 +62,10 @@ function AdminLogin({ onSuccess }: { onSuccess: (password: string) => void }) {
             <Shield className="h-8 w-8 text-primary" />
           </div>
           <h2 className="text-xl font-bold text-foreground">
-            Pannello Amministratore
+            Admin panel
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Inserisci la password admin per accedere alla configurazione VSL
+            Enter the admin password to configure visible folders
           </p>
         </div>
 
@@ -75,7 +76,7 @@ function AdminLogin({ onSuccess }: { onSuccess: (password: string) => void }) {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password Admin"
+              placeholder="Admin password"
               autoFocus
               className="w-full pl-10 pr-4 py-3 rounded-xl border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
             />
@@ -96,10 +97,10 @@ function AdminLogin({ onSuccess }: { onSuccess: (password: string) => void }) {
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Verifica...
+                Verifying...
               </span>
             ) : (
-              "Accedi come Admin"
+              "Sign in as admin"
             )}
           </button>
         </form>
@@ -115,10 +116,10 @@ export default function AdminPage() {
   const setAdminSessionPassword = useAppStore((s) => s.setAdminSessionPassword);
   const { apiFetch, isConfigured } = useApi();
 
-  const [videos, setVideos] = useState<VidalyticsVideo[]>([]);
-  const [videosLoading, setVideosLoading] = useState(true);
-  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
-  const [originalHiddenIds, setOriginalHiddenIds] = useState<Set<string>>(new Set());
+  const [folders, setFolders] = useState<FolderType[]>([]);
+  const [foldersLoading, setFoldersLoading] = useState(true);
+  const [allowedIds, setAllowedIds] = useState<Set<string>>(new Set());
+  const [originalAllowedIds, setOriginalAllowedIds] = useState<Set<string>>(new Set());
   const [configLoading, setConfigLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -129,11 +130,11 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!isConfigured || !isAdmin) return;
-    setVideosLoading(true);
-    apiFetch<VidalyticsVideo[]>("/videos")
-      .then(setVideos)
+    setFoldersLoading(true);
+    apiFetch<FolderType[]>("/folders")
+      .then(setFolders)
       .catch(() => {})
-      .finally(() => setVideosLoading(false));
+      .finally(() => setFoldersLoading(false));
   }, [apiFetch, isConfigured, isAdmin]);
 
   useEffect(() => {
@@ -142,36 +143,33 @@ export default function AdminPage() {
     fetch("/api/admin/vsl-config")
       .then((r) => r.json())
       .then((data) => {
-        if (data.hiddenVideoIds) {
-          const ids = new Set<string>(data.hiddenVideoIds);
-          setHiddenIds(ids);
-          setOriginalHiddenIds(ids);
+        if (data.allowedFolderIds) {
+          const ids = new Set<string>(data.allowedFolderIds);
+          setAllowedIds(ids);
+          setOriginalAllowedIds(ids);
         }
       })
       .catch(() => {})
       .finally(() => setConfigLoading(false));
   }, [isAdmin]);
 
-  const filteredVideos = useMemo(() => {
-    if (!searchQuery) return videos;
+  const filteredFolders = useMemo(() => {
+    if (!searchQuery) return folders;
     const q = searchQuery.toLowerCase();
-    return videos.filter(
-      (v) =>
-        v.name?.toLowerCase().includes(q) || v.title?.toLowerCase().includes(q)
-    );
-  }, [videos, searchQuery]);
+    return folders.filter((f) => f.name?.toLowerCase().includes(q));
+  }, [folders, searchQuery]);
 
   const hasChanges = useMemo(() => {
-    if (hiddenIds.size !== originalHiddenIds.size) return true;
-    for (const id of hiddenIds) {
-      if (!originalHiddenIds.has(id)) return true;
+    if (allowedIds.size !== originalAllowedIds.size) return true;
+    for (const id of allowedIds) {
+      if (!originalAllowedIds.has(id)) return true;
     }
     return false;
-  }, [hiddenIds, originalHiddenIds]);
+  }, [allowedIds, originalAllowedIds]);
 
-  const toggleVideo = (id: string) => {
+  const toggleFolder = (id: string) => {
     setSaved(false);
-    setHiddenIds((prev) => {
+    setAllowedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
         next.delete(id);
@@ -180,6 +178,16 @@ export default function AdminPage() {
       }
       return next;
     });
+  };
+
+  const selectAll = () => {
+    setSaved(false);
+    setAllowedIds(new Set(folders.map((f) => f.id)));
+  };
+
+  const deselectAll = () => {
+    setSaved(false);
+    setAllowedIds(new Set());
   };
 
   const doSave = async (pw: string) => {
@@ -192,27 +200,27 @@ export default function AdminPage() {
           "Content-Type": "application/json",
           "x-admin-password": pw,
         },
-        body: JSON.stringify({ hiddenVideoIds: Array.from(hiddenIds) }),
+        body: JSON.stringify({ allowedFolderIds: Array.from(allowedIds) }),
       });
 
       if (res.status === 403) {
         setAdminSessionPassword(null);
         setNeedsPassword(true);
-        setError("Password admin non valida. Reinseriscila.");
+        setError("Invalid admin password. Please enter it again.");
         return;
       }
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || "Errore nel salvataggio");
+        throw new Error(data.error || "Error saving");
       }
 
-      setOriginalHiddenIds(new Set(hiddenIds));
+      setOriginalAllowedIds(new Set(allowedIds));
       setNeedsPassword(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (e) {
-      if (!error) setError(e instanceof Error ? e.message : "Errore nel salvataggio");
+      if (!error) setError(e instanceof Error ? e.message : "Error saving");
     } finally {
       setSaving(false);
     }
@@ -243,9 +251,9 @@ export default function AdminPage() {
     return <AdminLogin onSuccess={handleAdminLogin} />;
   }
 
-  const loading = videosLoading || configLoading;
-  const visibleCount = videos.length - hiddenIds.size;
-  const hiddenCount = hiddenIds.size;
+  const loading = foldersLoading || configLoading;
+  const allowedCount = allowedIds.size;
+  const totalCount = folders.length;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -256,11 +264,11 @@ export default function AdminPage() {
               <Shield className="h-5 w-5 text-primary" />
             </div>
             <h1 className="text-2xl font-bold text-foreground">
-              Configurazione VSL
+              Folder configuration
             </h1>
           </div>
           <p className="text-sm text-muted-foreground ml-[52px]">
-            Scegli quali VSL rendere visibili nel menu &quot;Seleziona Video&quot;
+            Select which Vidalytics folders are visible in the app
           </p>
         </div>
 
@@ -281,7 +289,7 @@ export default function AdminPage() {
           ) : (
             <Save className="h-4 w-4" />
           )}
-          {saving ? "Salvataggio..." : saved ? "Salvato!" : "Salva configurazione"}
+          {saving ? "Saving..." : saved ? "Saved!" : "Save configuration"}
         </button>
       </div>
 
@@ -298,12 +306,12 @@ export default function AdminPage() {
           className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3"
         >
           <Lock className="h-4 w-4 text-primary shrink-0" />
-          <span className="text-sm text-foreground font-medium">Password Admin:</span>
+          <span className="text-sm text-foreground font-medium">Admin Password:</span>
           <input
             type="password"
             value={passwordInput}
             onChange={(e) => setPasswordInput(e.target.value)}
-            placeholder="Inserisci password admin"
+            placeholder="Enter admin password"
             autoFocus
             className="flex-1 rounded-lg border border-border bg-white px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/40"
           />
@@ -312,113 +320,129 @@ export default function AdminPage() {
             disabled={!passwordInput || saving}
             className="rounded-lg bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-50 transition-colors"
           >
-            {saving ? "Salvataggio..." : "Conferma e Salva"}
+            {saving ? "Saving..." : "Confirm and save"}
           </button>
         </form>
       )}
 
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-xl border border-border bg-card p-4">
-          <div className="text-2xl font-bold text-foreground">{videos.length}</div>
-          <div className="text-xs text-muted-foreground mt-1">VSL totali</div>
+          <div className="text-2xl font-bold text-foreground">{totalCount}</div>
+          <div className="text-xs text-muted-foreground mt-1">Total folders</div>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-2">
-            <Eye className="h-4 w-4 text-green-500" />
-            <span className="text-2xl font-bold text-green-600">{visibleCount}</span>
+            <FolderCheck className="h-4 w-4 text-green-500" />
+            <span className="text-2xl font-bold text-green-600">{allowedCount}</span>
           </div>
-          <div className="text-xs text-muted-foreground mt-1">Visibili nel tool</div>
+          <div className="text-xs text-muted-foreground mt-1">Visible in app</div>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-2">
-            <EyeOff className="h-4 w-4 text-muted-foreground" />
-            <span className="text-2xl font-bold text-muted-foreground">{hiddenCount}</span>
+            <Folder className="h-4 w-4 text-muted-foreground" />
+            <span className="text-2xl font-bold text-muted-foreground">{totalCount - allowedCount}</span>
           </div>
-          <div className="text-xs text-muted-foreground mt-1">Nascoste</div>
+          <div className="text-xs text-muted-foreground mt-1">Hidden</div>
         </div>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Cerca VSL per nome..."
-          className="w-full rounded-xl border border-border bg-card py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
-        />
+      <div className="flex items-center gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search folders by name..."
+            className="w-full rounded-xl border border-border bg-card py-3 pl-10 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+          />
+        </div>
+        <button
+          onClick={selectAll}
+          className="rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-foreground hover:bg-secondary transition-colors"
+        >
+          Select all
+        </button>
+        <button
+          onClick={deselectAll}
+          className="rounded-lg border border-border bg-card px-3 py-2 text-xs font-medium text-muted-foreground hover:bg-secondary transition-colors"
+        >
+          Deselect all
+        </button>
       </div>
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16">
           <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-          <p className="text-sm text-muted-foreground">Caricamento VSL...</p>
+          <p className="text-sm text-muted-foreground">Loading folders...</p>
         </div>
-      ) : filteredVideos.length === 0 ? (
+      ) : filteredFolders.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-border py-16">
-          <Video className="h-8 w-8 text-muted-foreground mb-3" />
+          <FolderOpen className="h-8 w-8 text-muted-foreground mb-3" />
           <p className="text-sm text-muted-foreground">
-            {searchQuery ? "Nessun risultato trovato" : "Nessuna VSL disponibile"}
+            {searchQuery ? "No results found" : "No folders available"}
           </p>
         </div>
       ) : (
         <div className="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border">
-          {filteredVideos.map((v) => {
-            const isHidden = hiddenIds.has(v.id);
+          {filteredFolders.map((f) => {
+            const isAllowed = allowedIds.has(f.id);
             return (
               <div
-                key={v.id}
+                key={f.id}
                 className={cn(
-                  "flex items-center gap-4 px-5 py-4 transition-colors",
-                  isHidden ? "bg-secondary/30 opacity-60" : "bg-card"
+                  "flex items-center gap-4 px-5 py-4 transition-colors cursor-pointer",
+                  isAllowed ? "bg-card" : "bg-secondary/30 opacity-60"
                 )}
+                onClick={() => toggleFolder(f.id)}
               >
-                <div className="flex h-12 w-20 shrink-0 items-center justify-center rounded-lg bg-secondary overflow-hidden">
-                  {v.thumbnail_url ? (
-                    <img
-                      src={v.thumbnail_url}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
+                <div className={cn(
+                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors",
+                  isAllowed ? "bg-primary/10" : "bg-secondary"
+                )}>
+                  {isAllowed ? (
+                    <FolderCheck className="h-5 w-5 text-primary" />
                   ) : (
-                    <Video className="h-5 w-5 text-muted-foreground" />
+                    <Folder className="h-5 w-5 text-muted-foreground" />
                   )}
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <p className={cn(
                     "text-sm font-medium truncate",
-                    isHidden ? "text-muted-foreground line-through" : "text-foreground"
+                    isAllowed ? "text-foreground" : "text-muted-foreground"
                   )}>
-                    {v.name || v.title || "Video senza nome"}
+                    {f.name || "Unnamed folder"}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    ID: {v.id}
-                    {v.duration ? ` · ${Math.floor(v.duration / 60)}:${String(Math.floor(v.duration % 60)).padStart(2, "0")}` : ""}
+                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                    <span className="flex items-center gap-1">
+                      <Video className="h-3 w-3" />
+                      {f.videoCount ?? f.video_count ?? 0} videos
+                    </span>
+                    <span>ID: {f.id}</span>
                   </p>
                 </div>
 
-                <button
-                  onClick={() => toggleVideo(v.id)}
+                <div
                   className={cn(
                     "flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-all",
-                    isHidden
-                      ? "bg-secondary text-muted-foreground hover:bg-green-500/10 hover:text-green-600"
-                      : "bg-green-500/10 text-green-600 hover:bg-danger/10 hover:text-danger"
+                    isAllowed
+                      ? "bg-green-500/10 text-green-600"
+                      : "bg-secondary text-muted-foreground"
                   )}
                 >
-                  {isHidden ? (
+                  {isAllowed ? (
                     <>
-                      <EyeOff className="h-3.5 w-3.5" />
-                      Nascosta
+                      <FolderCheck className="h-3.5 w-3.5" />
+                      Visible
                     </>
                   ) : (
                     <>
-                      <Eye className="h-3.5 w-3.5" />
-                      Visibile
+                      <Folder className="h-3.5 w-3.5" />
+                      Hidden
                     </>
                   )}
-                </button>
+                </div>
               </div>
             );
           })}
@@ -432,7 +456,7 @@ export default function AdminPage() {
             className="flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-lg hover:bg-primary-hover transition-all hover:scale-105"
           >
             <Save className="h-4 w-4" />
-            Salva modifiche ({Math.abs(hiddenIds.size - originalHiddenIds.size)} cambiate)
+            Save changes ({Math.abs(allowedIds.size - originalAllowedIds.size)} changed)
           </button>
         </div>
       )}

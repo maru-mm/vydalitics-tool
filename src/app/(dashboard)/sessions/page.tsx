@@ -121,16 +121,16 @@ export default function SessionsPage() {
     const headers = [
       "Session ID",
       "Viewer ID",
-      "Inizio",
-      "Fine",
+      "Start",
+      "End",
       "Watch Time (s)",
-      "% Visto",
-      "Paese",
-      "Dispositivo",
+      "% Watched",
+      "Country",
+      "Device",
       "Browser",
       "OS",
       "Referrer",
-      "Convertito",
+      "Converted",
       "CTA Click",
       "Play Gate",
     ];
@@ -146,9 +146,9 @@ export default function SessionsPage() {
       s.browser || "",
       s.os || "",
       s.referrer || "",
-      s.converted ? "Si" : "No",
-      s.cta_clicked ? "Si" : "No",
-      s.play_gate_submitted ? "Si" : "No",
+      s.converted ? "Yes" : "No",
+      s.cta_clicked ? "Yes" : "No",
+      s.play_gate_submitted ? "Yes" : "No",
     ]);
     const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -161,9 +161,9 @@ export default function SessionsPage() {
   };
 
   const ranges: { label: string; value: DateRange }[] = [
-    { label: "7G", value: "7d" },
-    { label: "14G", value: "14d" },
-    { label: "30G", value: "30d" },
+    { label: "7D", value: "7d" },
+    { label: "14D", value: "14d" },
+    { label: "30D", value: "30d" },
   ];
 
   const deviceIcon = (device?: string) => {
@@ -182,9 +182,9 @@ export default function SessionsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Sessioni Viewer</h1>
+          <h1 className="text-2xl font-bold">Viewer Sessions</h1>
           <p className="text-muted-foreground">
-            Storico sessioni individuali per video (max 1.000 per chiamata)
+            Individual session history per video (max 1,000 per call)
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -236,7 +236,7 @@ export default function SessionsPage() {
                 type="text"
                 value={filterCountry}
                 onChange={(e) => setFilterCountry(e.target.value)}
-                placeholder="Paese (es. IT, US)"
+                placeholder="Country (e.g. US, GB)"
                 className="h-8 w-36 rounded-lg border border-border bg-white px-2 text-sm outline-none focus:border-primary"
               />
             </div>
@@ -247,7 +247,7 @@ export default function SessionsPage() {
                 onChange={(e) => setFilterDevice(e.target.value)}
                 className="h-8 rounded-lg border border-border bg-white px-2 text-sm outline-none focus:border-primary"
               >
-                <option value="">Tutti i dispositivi</option>
+                <option value="">All devices</option>
                 <option value="desktop">Desktop</option>
                 <option value="mobile">Mobile</option>
                 <option value="tablet">Tablet</option>
@@ -260,7 +260,7 @@ export default function SessionsPage() {
                 onChange={(e) => setFilterBrowser(e.target.value)}
                 className="h-8 rounded-lg border border-border bg-white px-2 text-sm outline-none focus:border-primary"
               >
-                <option value="">Tutti i browser</option>
+                <option value="">All browsers</option>
                 <option value="chrome">Chrome</option>
                 <option value="safari">Safari</option>
                 <option value="firefox">Firefox</option>
@@ -298,11 +298,11 @@ export default function SessionsPage() {
               <thead>
                 <tr className="border-b border-border text-left text-muted-foreground">
                   <th className="pb-3 pr-4 font-medium">Viewer</th>
-                  <th className="pb-3 pr-4 font-medium">Inizio</th>
-                  <th className="pb-3 pr-4 font-medium">Durata</th>
-                  <th className="pb-3 pr-4 font-medium">% Visto</th>
-                  <th className="pb-3 pr-4 font-medium">Paese</th>
-                  <th className="pb-3 pr-4 font-medium">Dispositivo</th>
+                  <th className="pb-3 pr-4 font-medium">Start</th>
+                  <th className="pb-3 pr-4 font-medium">Duration</th>
+                  <th className="pb-3 pr-4 font-medium">% Watched</th>
+                  <th className="pb-3 pr-4 font-medium">Country</th>
+                  <th className="pb-3 pr-4 font-medium">Device</th>
                   <th className="pb-3 pr-4 font-medium">Browser</th>
                   <th className="pb-3 pr-4 font-medium">Conv.</th>
                   <th className="pb-3 font-medium">CTA</th>
@@ -317,7 +317,7 @@ export default function SessionsPage() {
                       </span>
                     </td>
                     <td className="py-3 pr-4 text-muted-foreground">
-                      {new Date(s.started_at).toLocaleString("it-IT", {
+                      {new Date(s.started_at).toLocaleString("en-US", {
                         day: "2-digit",
                         month: "short",
                         hour: "2-digit",
@@ -374,7 +374,7 @@ export default function SessionsPage() {
 
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Pagina {page} &middot; {sessions.length} sessioni
+              Page {page} &middot; {sessions.length} sessions
             </p>
             <div className="flex gap-2">
               <Button
@@ -384,7 +384,7 @@ export default function SessionsPage() {
                 disabled={page <= 1 || loading}
               >
                 <ChevronLeft className="h-4 w-4" />
-                Precedente
+                Previous
               </Button>
               <Button
                 variant="secondary"
@@ -392,7 +392,7 @@ export default function SessionsPage() {
                 onClick={() => loadPage(page + 1)}
                 disabled={!hasMore || loading}
               >
-                Successiva
+                Next
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
@@ -401,8 +401,8 @@ export default function SessionsPage() {
       ) : (
         <EmptyState
           icon={<Users className="h-8 w-8" />}
-          title="Nessuna sessione trovata"
-          description="Non ci sono sessioni viewer per questo video nel periodo selezionato."
+          title="No sessions found"
+          description="There are no viewer sessions for this video in the selected period."
         />
       )}
     </div>

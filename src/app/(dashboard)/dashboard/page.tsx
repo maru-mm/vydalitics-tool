@@ -24,18 +24,22 @@ import {
   Video,
   RefreshCw,
   Loader2,
+  FolderOpen,
 } from "lucide-react";
 import Link from "next/link";
 import type {
   VidalyticsVideo,
   VideoStats,
   TimelineStats,
+  Folder,
 } from "@/lib/vidalytics-api";
 import type { DateRange } from "@/lib/store";
 
 export default function DashboardPage() {
   const { apiToken, dateRange, setDateRange } = useAppStore();
   const { apiFetch } = useApi();
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [videos, setVideos] = useState<VidalyticsVideo[]>([]);
   const [stats, setStats] = useState<VideoStats[]>([]);
   const [timeline, setTimeline] = useState<TimelineStats[]>([]);
@@ -43,13 +47,33 @@ export default function DashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async (showLoader = true) => {
+  useEffect(() => {
+    Promise.all([
+      apiFetch<Folder[]>("/folders"),
+      fetch("/api/admin/vsl-config").then((r) => r.json()).catch(() => ({ allowedFolderIds: [] })),
+    ])
+      .then(([allFolders, config]) => {
+        const allowed: string[] = config.allowedFolderIds || [];
+        const visibleFolders = allowed.length > 0
+          ? allFolders.filter((f: Folder) => allowed.includes(f.id))
+          : allFolders;
+        setFolders(visibleFolders);
+        if (visibleFolders.length > 0 && !selectedFolderId) {
+          setSelectedFolderId(visibleFolders[0].id);
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiToken]);
+
+  const fetchData = async (folderId: string | null, showLoader = true) => {
+    if (!folderId) return;
     if (showLoader) setLoading(true);
     else setRefreshing(true);
     setError(null);
 
     try {
-      const vids = await apiFetch<VidalyticsVideo[]>("/videos");
+      const vids = await apiFetch<VidalyticsVideo[]>(`/videos?folder_id=${folderId}`);
       setVideos(vids);
       setLoading(false);
 
@@ -73,7 +97,7 @@ export default function DashboardPage() {
           .catch(() => {});
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Errore di connessione");
+      setError(err instanceof Error ? err.message : "Connection error");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -81,9 +105,9 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    fetchData();
+    if (selectedFolderId) fetchData(selectedFolderId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiToken, dateRange]);
+  }, [selectedFolderId, dateRange]);
 
   const chartTimeline = useMemo(
     () =>
@@ -110,7 +134,7 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Panoramica delle tue performance video</p>
+          <p className="text-muted-foreground">Overview of your video performance</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {[...Array(5)].map((_, i) => (
@@ -137,16 +161,16 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Panoramica delle tue performance video</p>
+          <p className="text-muted-foreground">Overview of your video performance</p>
         </div>
         <EmptyState
           icon={<RefreshCw className="h-8 w-8" />}
-          title="Errore di caricamento"
-          description={`Non è stato possibile caricare i dati: ${error}`}
+          title="Loading Error"
+          description={`Could not load data: ${error}`}
           action={
-            <Button onClick={() => fetchData()}>
+            <Button onClick={() => fetchData(selectedFolderId)}>
               <RefreshCw className="h-4 w-4" />
-              Riprova
+              Retry
             </Button>
           }
         />
@@ -168,9 +192,9 @@ export default function DashboardPage() {
 
   const hasData = videos.length > 0;
   const ranges: { label: string; value: DateRange }[] = [
-    { label: "7G", value: "7d" },
-    { label: "14G", value: "14d" },
-    { label: "30G", value: "30d" },
+    { label: "7D", value: "7d" },
+    { label: "14D", value: "14d" },
+    { label: "30D", value: "30d" },
   ];
 
   return (
@@ -180,11 +204,31 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">
             {hasData
-              ? `${videos.length} video monitorati`
-              : "Panoramica delle tue performance video"}
+              ? `${videos.length} videos monitored`
+              : "Overview of your video performance"}
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {folders.length > 1 && (
+            <div className="flex items-center gap-1.5">
+              <FolderOpen className="h-4 w-4 text-muted-foreground" />
+              <select
+                value={selectedFolderId || ""}
+                onChange={(e) => {
+                  setSelectedFolderId(e.target.value);
+                  setStats([]);
+                  setTimeline([]);
+                }}
+                className="h-9 rounded-lg border border-border bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              >
+                {folders.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name} ({f.videoCount ?? f.video_count ?? 0})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex rounded-lg border border-border bg-white">
             {ranges.map((r) => (
               <button
@@ -203,7 +247,7 @@ export default function DashboardPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => fetchData(false)}
+            onClick={() => fetchData(selectedFolderId, false)}
             disabled={refreshing}
           >
             {refreshing ? (
@@ -217,17 +261,17 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
-          label="Play Totali"
+          label="Total Plays"
           value={formatNumber(totalPlays)}
           icon={<Play className="h-5 w-5 text-primary" />}
         />
         <StatCard
-          label="Impressioni"
+          label="Impressions"
           value={formatNumber(totalImpressions)}
           icon={<Eye className="h-5 w-5 text-primary" />}
         />
         <StatCard
-          label="Tempo Medio"
+          label="Avg Watch Time"
           value={formatDuration(avgWatchTime)}
           icon={<Clock className="h-5 w-5 text-primary" />}
         />
@@ -245,13 +289,13 @@ export default function DashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <AreaChartCard
-          title="Play & Conversioni"
+          title="Plays & Conversions"
           data={chartTimeline.length > 0 ? chartTimeline : [{ name: "-", plays: 0, conversions: 0 }]}
           dataKey="plays"
           secondaryKey="conversions"
         />
         <BarChartCard
-          title="Top Video per Play"
+          title="Top Videos by Plays"
           data={topVideos.length > 0 ? topVideos : [{ name: "-", plays: 0 }]}
           dataKey="plays"
         />
@@ -260,8 +304,8 @@ export default function DashboardPage() {
       {!hasData && (
         <EmptyState
           icon={<Video className="h-8 w-8" />}
-          title="Nessun video trovato"
-          description="Non abbiamo trovato video nel tuo account. Carica un video su Vidalytics per iniziare."
+          title="No videos found"
+          description="We couldn't find any videos in your account. Upload a video to Vidalytics to get started."
         />
       )}
     </div>

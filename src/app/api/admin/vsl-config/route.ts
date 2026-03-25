@@ -6,6 +6,7 @@ const CONFIG_PATH = path.join(process.cwd(), "data", "vsl-config.json");
 const BLOB_KEY = "vsl-config.json";
 
 interface VslConfig {
+  allowedFolderIds: string[];
   hiddenVideoIds: string[];
 }
 
@@ -20,7 +21,7 @@ async function readConfigFromBlob(): Promise<VslConfig> {
     const response = await fetch(blobs[0].url);
     return await response.json();
   }
-  return { hiddenVideoIds: [] };
+  return { allowedFolderIds: [], hiddenVideoIds: [] };
 }
 
 async function writeConfigToBlob(config: VslConfig): Promise<void> {
@@ -36,7 +37,7 @@ async function readConfigFromFile(): Promise<VslConfig> {
     const raw = await fs.readFile(CONFIG_PATH, "utf-8");
     return JSON.parse(raw);
   } catch {
-    return { hiddenVideoIds: [] };
+    return { allowedFolderIds: [], hiddenVideoIds: [] };
   }
 }
 
@@ -50,7 +51,7 @@ async function readConfig(): Promise<VslConfig> {
     if (useBlob()) return await readConfigFromBlob();
     return await readConfigFromFile();
   } catch {
-    return { hiddenVideoIds: [] };
+    return { allowedFolderIds: [], hiddenVideoIds: [] };
   }
 }
 
@@ -73,24 +74,25 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   if (!isAdminRequest(req)) {
-    return NextResponse.json({ error: "Non autorizzato" }, { status: 403 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 
   try {
     const body = await req.json();
-    const { hiddenVideoIds } = body;
+    const existing = await readConfig();
 
-    if (!Array.isArray(hiddenVideoIds)) {
-      return NextResponse.json(
-        { error: "hiddenVideoIds deve essere un array" },
-        { status: 400 }
-      );
-    }
+    const config: VslConfig = {
+      allowedFolderIds: Array.isArray(body.allowedFolderIds)
+        ? body.allowedFolderIds
+        : existing.allowedFolderIds || [],
+      hiddenVideoIds: Array.isArray(body.hiddenVideoIds)
+        ? body.hiddenVideoIds
+        : existing.hiddenVideoIds || [],
+    };
 
-    const config: VslConfig = { hiddenVideoIds };
     await writeConfig(config);
     return NextResponse.json({ ok: true, config });
   } catch {
-    return NextResponse.json({ error: "Errore nel salvataggio" }, { status: 500 });
+    return NextResponse.json({ error: "Error saving" }, { status: 500 });
   }
 }

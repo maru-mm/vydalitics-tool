@@ -97,8 +97,8 @@ export default function FunnelsPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Funnel</h1>
-          <p className="text-muted-foreground">I tuoi funnel video</p>
+          <h1 className="text-2xl font-bold">Funnels</h1>
+          <p className="text-muted-foreground">Your video funnels</p>
         </div>
         <div className="space-y-3">
           {[...Array(4)].map((_, i) => (
@@ -112,17 +112,17 @@ export default function FunnelsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Funnel</h1>
+        <h1 className="text-2xl font-bold">Funnels</h1>
         <p className="text-muted-foreground">
-          {funnels.length} funnel nel tuo account
+          {funnels.length} funnel{funnels.length !== 1 ? "s" : ""} in your account
         </p>
       </div>
 
       {funnels.length === 0 ? (
         <EmptyState
           icon={<GitBranch className="h-8 w-8" />}
-          title="Nessun funnel"
-          description="Non ci sono funnel configurati nel tuo account Vidalytics."
+          title="No funnels"
+          description="There are no funnels configured in your Vidalytics account."
         />
       ) : (
         <div className="space-y-3">
@@ -148,19 +148,19 @@ export default function FunnelsPage() {
                         <Badge variant="info">{funnel.video_ids.length} video</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        Creato: {new Date(funnel.created_at).toLocaleDateString("it-IT")}
+                        Created: {new Date(funnel.created_at).toLocaleDateString("en-US")}
                         {funnel.updated_at !== funnel.created_at &&
-                          ` · Aggiornato: ${new Date(funnel.updated_at).toLocaleDateString("it-IT")}`}
+                          ` · Updated: ${new Date(funnel.updated_at).toLocaleDateString("en-US")}`}
                       </p>
                     </div>
                     {funnel.stats && (
                       <div className="hidden items-center gap-6 lg:flex">
                         <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Play Totali</p>
+                          <p className="text-xs text-muted-foreground">Total Plays</p>
                           <p className="font-semibold">{formatNumber(totalPlays)}</p>
                         </div>
                         <div className="text-center">
-                          <p className="text-xs text-muted-foreground">Conversioni</p>
+                          <p className="text-xs text-muted-foreground">Conversions</p>
                           <p className="font-semibold">{formatNumber(totalConversions)}</p>
                         </div>
                         <div className="text-center">
@@ -239,7 +239,7 @@ export default function FunnelsPage() {
                       })
                     ) : (
                       <Card className="py-6 text-center text-sm text-muted-foreground">
-                        Nessun video trovato in questo funnel.
+                        No videos found in this funnel.
                       </Card>
                     )}
                   </div>

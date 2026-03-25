@@ -42,74 +42,74 @@ interface Automation {
 const PRESET_AUTOMATIONS: Automation[] = [
   {
     id: "low-engagement",
-    name: "Alert Basso Engagement",
+    name: "Low Engagement Alert",
     description:
-      "Ricevi una notifica quando un video scende sotto il 30% di avg watch time",
+      "Get notified when a video drops below 30% avg watch time",
     trigger: "avg_watch_time < 30%",
-    action: "Invia notifica email",
+    action: "Send email notification",
     enabled: false,
     icon: <BarChart3 className="h-5 w-5" />,
   },
   {
     id: "high-conversion",
-    name: "Celebra Alta Conversione",
+    name: "Celebrate High Conversion",
     description:
-      "Segnala quando un video supera il 5% di conversion rate",
+      "Flag when a video exceeds 5% conversion rate",
     trigger: "conversion_rate > 5%",
-    action: "Log + notifica",
+    action: "Log + notification",
     enabled: false,
     icon: <Zap className="h-5 w-5" />,
   },
   {
     id: "daily-report",
-    name: "Report Giornaliero",
+    name: "Daily Report",
     description:
-      "Ogni giorno alle 9:00 genera un riepilogo delle metriche principali",
-    trigger: "Cron: ogni giorno 9:00",
-    action: "Genera report email",
+      "Every day at 9:00 AM generate a summary of key metrics",
+    trigger: "Cron: daily 9:00 AM",
+    action: "Generate email report",
     enabled: false,
     icon: <Mail className="h-5 w-5" />,
   },
   {
     id: "new-video-alert",
-    name: "Nuovo Video Rilevato",
-    description: "Notifica quando viene aggiunto un nuovo video all'account",
-    trigger: "Nuovo video creato",
-    action: "Webhook + notifica",
+    name: "New Video Detected",
+    description: "Get notified when a new video is added to the account",
+    trigger: "New video created",
+    action: "Webhook + notification",
     enabled: false,
     icon: <Play className="h-5 w-5" />,
   },
   {
     id: "watch-milestone",
-    name: "Milestone Visualizzazioni",
+    name: "Views Milestone",
     description:
-      "Avvisa quando un video raggiunge 1K, 5K, 10K play",
+      "Alert when a video reaches 1K, 5K, 10K plays",
     trigger: "plays = 1K / 5K / 10K",
-    action: "Invia notifica",
+    action: "Send notification",
     enabled: false,
     icon: <Bell className="h-5 w-5" />,
   },
   {
     id: "stale-video",
-    name: "Video Inattivo",
+    name: "Inactive Video",
     description:
-      "Segnala video che non ricevono play da più di 7 giorni",
-    trigger: "0 plays in 7 giorni",
-    action: "Notifica + suggerimento",
+      "Flag videos with no plays in over 7 days",
+    trigger: "0 plays in 7 days",
+    action: "Notification + suggestion",
     enabled: false,
     icon: <Clock className="h-5 w-5" />,
   },
 ];
 
 const WEBHOOK_EVENTS = [
-  { id: "play", label: "Play Video", description: "Quando un viewer avvia la riproduzione" },
-  { id: "complete", label: "Completamento", description: "Quando un viewer completa il video" },
-  { id: "conversion", label: "Conversione", description: "Quando un viewer converte" },
-  { id: "cta_click", label: "CTA Click", description: "Quando un viewer clicca il CTA" },
-  { id: "opt_in", label: "Opt-in", description: "Quando un viewer compila il play gate" },
-  { id: "milestone_25", label: "25% Visto", description: "Quando il viewer raggiunge il 25%" },
-  { id: "milestone_50", label: "50% Visto", description: "Quando il viewer raggiunge il 50%" },
-  { id: "milestone_75", label: "75% Visto", description: "Quando il viewer raggiunge il 75%" },
+  { id: "play", label: "Video Play", description: "When a viewer starts playback" },
+  { id: "complete", label: "Completion", description: "When a viewer completes the video" },
+  { id: "conversion", label: "Conversion", description: "When a viewer converts" },
+  { id: "cta_click", label: "CTA Click", description: "When a viewer clicks the CTA" },
+  { id: "opt_in", label: "Opt-in", description: "When a viewer submits the play gate" },
+  { id: "milestone_25", label: "25% Watched", description: "When the viewer reaches 25%" },
+  { id: "milestone_50", label: "50% Watched", description: "When the viewer reaches 50%" },
+  { id: "milestone_75", label: "75% Watched", description: "When the viewer reaches 75%" },
 ];
 
 export default function AutomationsPage() {
@@ -184,14 +184,14 @@ export default function AutomationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Automazioni</h1>
+          <h1 className="text-2xl font-bold">Automations</h1>
           <p className="text-muted-foreground">
-            {enabledCount} automazioni attive su {automations.length}
+            {enabledCount} active automation{enabledCount !== 1 ? "s" : ""} of {automations.length}
           </p>
         </div>
         <Button>
           <Plus className="h-4 w-4" />
-          Nuova Automazione
+          New Automation
         </Button>
       </div>
 
@@ -222,7 +222,7 @@ export default function AutomationsPage() {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="success">Azione</Badge>
+                <Badge variant="success">Action</Badge>
                 <span className="text-xs text-muted-foreground">
                   {automation.action}
                 </span>
@@ -240,9 +240,9 @@ export default function AutomationsPage() {
               <Webhook className="h-6 w-6 text-accent" />
             </div>
             <div>
-              <h3 className="font-semibold">Webhook</h3>
+              <h3 className="font-semibold">Webhooks</h3>
               <p className="text-sm text-muted-foreground">
-                Invia dati a servizi esterni (Zapier, Make, n8n, CRM) per ogni evento video
+                Send data to external services (Zapier, Make, n8n, CRM) for each video event
               </p>
             </div>
           </div>
@@ -251,7 +251,7 @@ export default function AutomationsPage() {
             onClick={() => setShowWebhookForm(!showWebhookForm)}
           >
             <Plus className="h-4 w-4" />
-            Aggiungi Webhook
+            Add Webhook
           </Button>
         </div>
 
@@ -264,9 +264,9 @@ export default function AutomationsPage() {
               placeholder="https://hooks.zapier.com/hooks/catch/..."
             />
             <div>
-              <label className="text-sm font-medium text-foreground">Eventi</label>
+              <label className="text-sm font-medium text-foreground">Events</label>
               <p className="mb-2 text-xs text-muted-foreground">
-                Seleziona gli eventi che attiveranno il webhook
+                Select the events that will trigger the webhook
               </p>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
                 {WEBHOOK_EVENTS.map((event) => (
@@ -302,7 +302,7 @@ export default function AutomationsPage() {
                   setWebhookEvents([]);
                 }}
               >
-                Annulla
+                Cancel
               </Button>
               <Button
                 size="sm"
@@ -314,7 +314,7 @@ export default function AutomationsPage() {
                 ) : (
                   <Plus className="h-4 w-4" />
                 )}
-                Crea Webhook
+                Create Webhook
               </Button>
             </div>
           </div>
@@ -343,10 +343,10 @@ export default function AutomationsPage() {
                   </div>
                 </div>
                 <Badge variant={wh.active ? "success" : "default"}>
-                  {wh.active ? "Attivo" : "Inattivo"}
+                  {wh.active ? "Active" : "Inactive"}
                 </Badge>
                 <span className="text-xs text-muted-foreground">
-                  {new Date(wh.created_at).toLocaleDateString("it-IT")}
+                  {new Date(wh.created_at).toLocaleDateString("en-US")}
                 </span>
                 <Button
                   variant="ghost"
@@ -365,7 +365,7 @@ export default function AutomationsPage() {
           </div>
         ) : (
           <div className="py-6 text-center text-sm text-muted-foreground">
-            Nessun webhook configurato. Aggiungi un webhook per sincronizzare eventi video con i tuoi strumenti.
+            No webhooks configured. Add a webhook to sync video events with your tools.
           </div>
         )}
       </Card>

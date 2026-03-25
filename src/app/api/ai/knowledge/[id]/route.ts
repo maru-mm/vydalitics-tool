@@ -13,14 +13,14 @@ export async function DELETE(
     });
     if (!res.ok) {
       return NextResponse.json(
-        { error: "Documento non trovato" },
+        { error: "Document not found" },
         { status: res.status }
       );
     }
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
-      { error: "Backend AI non raggiungibile" },
+      { error: "AI Backend unreachable" },
       { status: 502 }
     );
   }

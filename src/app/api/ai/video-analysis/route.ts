@@ -15,49 +15,49 @@ export async function POST(req: NextRequest) {
   const dropOffSummary = buildDropOffSummary(dropOff);
   const segmentSummary = buildSegmentSummary(segments);
 
-  const prompt = `Sei un esperto analista di Video Sales Letters (VSL) e video marketing. Analizza in modo approfondito le performance di questo video e fornisci insights azionabili.
+  const prompt = `You are an expert analyst of Video Sales Letters (VSL) and video marketing. Analyze this video's performance in depth and provide actionable insights.
 
 ## Video: "${videoName}"
 
-## Metriche Principali
-- Play: ${stats.plays} (Unici: ${stats.unique_plays})
-- Impressioni: ${stats.impressions}
-- Play Rate: ${(stats.play_rate * 100).toFixed(1)}%
-- Unmute Rate: ${stats.unmute_rate ? (stats.unmute_rate * 100).toFixed(1) + "%" : "N/D"}
-- Tempo Medio di Visione: ${Math.floor(stats.avg_watch_time / 60)}m ${Math.floor(stats.avg_watch_time % 60)}s
-- % Media Guardata: ${(stats.avg_percent_watched * 100).toFixed(1)}%
-- Conversioni: ${stats.conversions} (Rate: ${(stats.conversion_rate * 100).toFixed(1)}%)
-- CTA Clicks: ${stats.cta_clicks} (Rate: ${(stats.cta_click_rate * 100).toFixed(1)}%)
+## Main metrics
+- Plays: ${stats.plays} (Unique: ${stats.unique_plays})
+- Impressions: ${stats.impressions}
+- Play rate: ${(stats.play_rate * 100).toFixed(1)}%
+- Unmute rate: ${stats.unmute_rate ? (stats.unmute_rate * 100).toFixed(1) + "%" : "N/A"}
+- Average watch time: ${Math.floor(stats.avg_watch_time / 60)}m ${Math.floor(stats.avg_watch_time % 60)}s
+- Avg. % watched: ${(stats.avg_percent_watched * 100).toFixed(1)}%
+- Conversions: ${stats.conversions} (Rate: ${(stats.conversion_rate * 100).toFixed(1)}%)
+- CTA clicks: ${stats.cta_clicks} (Rate: ${(stats.cta_click_rate * 100).toFixed(1)}%)
 
-## Curva di Drop-Off (Retention per Secondo)
+## Drop-off curve (retention per second)
 ${dropOffSummary}
 
-## Dati Segmentati
+## Segmented data
 ${segmentSummary}
 
 ---
 
-Fornisci la tua analisi strutturata in queste sezioni:
+Provide your analysis in these sections:
 
-### 1. Performance Generale
-Valuta le metriche principali rispetto ai benchmark del settore VSL.
+### 1. Overall performance
+Assess the main metrics against VSL industry benchmarks.
 
-### 2. Analisi Hook (Primi 30 Secondi)
-Analizza play rate, unmute rate e retention iniziale. Il hook funziona?
+### 2. Hook analysis (first 30 seconds)
+Analyze play rate, unmute rate, and early retention. Does the hook work?
 
-### 3. Analisi Retention Frame-by-Frame
-Identifica i punti critici di drop-off nella curva di retention. Dove si perdono gli spettatori e perché?
+### 3. Frame-by-frame retention analysis
+Identify critical drop-off points on the retention curve. Where are viewers lost and why?
 
-### 4. Punti di Forza
-Cosa funziona bene in questo video.
+### 4. Strengths
+What works well in this video.
 
-### 5. Aree di Miglioramento
-Problemi specifici con suggerimenti concreti.
+### 5. Areas for improvement
+Specific issues with concrete suggestions.
 
-### 6. Piano d'Azione (Top 3 Priorità)
-Le 3 azioni più importanti per migliorare le performance, ordinate per impatto.
+### 6. Action plan (top 3 priorities)
+The 3 most important actions to improve performance, ordered by impact.
 
-Rispondi in italiano.`;
+Respond in English.`;
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -84,7 +84,7 @@ Rispondi in italiano.`;
 
     const data = await response.json();
     const text =
-      data.content?.[0]?.text || "Analisi non disponibile.";
+      data.content?.[0]?.text || "Analysis not available.";
 
     return NextResponse.json({ analysis: text });
   } catch (e: unknown) {
@@ -96,13 +96,13 @@ Rispondi in italiano.`;
 function buildDropOffSummary(
   dropOff: { watches: Record<string, number> } | null
 ): string {
-  if (!dropOff?.watches) return "Dati drop-off non disponibili.";
+  if (!dropOff?.watches) return "Drop-off data not available.";
 
   const entries = Object.entries(dropOff.watches)
     .map(([sec, count]) => ({ sec: parseInt(sec), count }))
     .sort((a, b) => a.sec - b.sec);
 
-  if (entries.length === 0) return "Nessun dato drop-off.";
+  if (entries.length === 0) return "No drop-off data.";
 
   const maxViewers = entries[0]?.count || 1;
   const keyPoints: string[] = [];
@@ -125,7 +125,7 @@ function buildDropOffSummary(
     const mins = Math.floor(last.sec / 60);
     const secs = last.sec % 60;
     keyPoints.push(
-      `- Fine (${mins}m${secs > 0 ? secs + "s" : ""}): ${pct}% retention (${last.count} viewers)`
+      `- End (${mins}m${secs > 0 ? secs + "s" : ""}): ${pct}% retention (${last.count} viewers)`
     );
   }
 
@@ -142,7 +142,7 @@ function buildDropOffSummary(
 
   if (biggestDrop.dropPct > 0) {
     keyPoints.push(
-      `\nMaggior drop: tra ${biggestDrop.from}s e ${biggestDrop.to}s (-${biggestDrop.dropPct.toFixed(1)}% degli spettatori)`
+      `\nLargest drop: between ${biggestDrop.from}s and ${biggestDrop.to}s (-${biggestDrop.dropPct.toFixed(1)}% of viewers)`
     );
   }
 
@@ -152,7 +152,7 @@ function buildDropOffSummary(
 function buildSegmentSummary(
   segments: Record<string, Array<{ segment_value: string; plays: number; conversions: number }>> | null
 ): string {
-  if (!segments) return "Nessun dato segmentato disponibile.";
+  if (!segments) return "No segmented data available.";
 
   const parts: string[] = [];
   for (const [type, data] of Object.entries(segments)) {
@@ -167,5 +167,5 @@ function buildSegmentSummary(
     );
   }
 
-  return parts.length > 0 ? parts.join("\n") : "Nessun dato segmentato.";
+  return parts.length > 0 ? parts.join("\n") : "No segmented data.";
 }

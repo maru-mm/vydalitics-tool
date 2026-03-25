@@ -929,14 +929,14 @@ export class VidalyticsClient {
     const mediaUrl = mediaInfo.hlsUrl || mediaInfo.mp4Url;
     if (mediaUrl) {
       throw new MediaUrlAvailableError(
-        "Sottotitoli non trovati, ma è disponibile l'URL del media per la trascrizione Whisper.",
+        "Subtitles not found, but a media URL is available for Whisper transcription.",
         mediaUrl
       );
     }
 
     throw new Error(
-      "Sottotitoli/script non disponibili e nessun URL media estratto. " +
-        "Assicurati che il video esista e sia pubblicato su Vidalytics."
+      "Subtitles/script not available and no media URL extracted. " +
+        "Make sure the video exists and is published on Vidalytics."
     );
   }
 

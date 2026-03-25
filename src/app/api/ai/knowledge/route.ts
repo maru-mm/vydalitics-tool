@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json(data);
   } catch {
     return NextResponse.json(
-      { error: "Backend AI non raggiungibile" },
+      { error: "AI Backend unreachable" },
       { status: 502 }
     );
   }
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const file = formData.get("file");
     if (!file) {
-      return NextResponse.json({ error: "Nessun file" }, { status: 400 });
+      return NextResponse.json({ error: "No file" }, { status: 400 });
     }
 
     const backendForm = new FormData();
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     if (!res.ok) {
       const errText = await res.text();
       return NextResponse.json(
-        { error: errText || "Errore upload" },
+        { error: errText || "Upload error" },
         { status: res.status }
       );
     }
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(data);
   } catch {
     return NextResponse.json(
-      { error: "Backend AI non raggiungibile" },
+      { error: "AI Backend unreachable" },
       { status: 502 }
     );
   }

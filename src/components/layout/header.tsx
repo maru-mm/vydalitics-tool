@@ -88,7 +88,7 @@ export function Header() {
                   ? "bg-accent/10 text-accent"
                   : "bg-secondary text-muted-foreground"
             )}
-            title={`API: ${accountInfo.api_requests_used.toLocaleString()} / ${accountInfo.api_requests_limit.toLocaleString()} richieste (${accountInfo.plan})`}
+            title={`API: ${accountInfo.api_requests_used.toLocaleString()} / ${accountInfo.api_requests_limit.toLocaleString()} requests (${accountInfo.plan})`}
           >
             {isCritical ? (
               <AlertTriangle className="h-3.5 w-3.5" />
@@ -118,7 +118,7 @@ export function Header() {
               ? "bg-primary/10 text-primary"
               : "text-muted-foreground hover:bg-secondary hover:text-foreground"
           )}
-          title="Pannello Admin"
+          title="Admin Panel"
         >
           <Shield className="h-4 w-4" />
           Admin
@@ -127,10 +127,10 @@ export function Header() {
         <button
           onClick={() => setAuthenticated(false)}
           className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-          title="Esci"
+          title="Sign Out"
         >
           <LogOut className="h-4 w-4" />
-          Esci
+          Sign Out
         </button>
       </div>
     </header>

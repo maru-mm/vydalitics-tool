@@ -31,6 +31,7 @@ import {
   Filter,
   X,
   Download,
+  FolderOpen,
 } from "lucide-react";
 import Link from "next/link";
 import type {
@@ -38,6 +39,7 @@ import type {
   VideoStats,
   TimelineStats,
   SegmentedStats,
+  Folder,
 } from "@/lib/vidalytics-api";
 import type { DateRange } from "@/lib/store";
 
@@ -51,15 +53,17 @@ const segmentIcons: Record<SegmentType, React.ReactNode> = {
 };
 
 const segmentLabels: Record<SegmentType, string> = {
-  country: "Paese",
-  device: "Dispositivo",
+  country: "Country",
+  device: "Device",
   browser: "Browser",
-  os: "Sistema Op.",
+  os: "OS",
 };
 
 export default function AnalyticsPage() {
   const { apiToken, dateRange, setDateRange } = useAppStore();
   const { apiFetch } = useApi();
+  const [folders, setFolders] = useState<Folder[]>([]);
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [videos, setVideos] = useState<VidalyticsVideo[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [stats, setStats] = useState<VideoStats | null>(null);
@@ -111,7 +115,27 @@ export default function AnalyticsPage() {
   };
 
   useEffect(() => {
-    apiFetch<VidalyticsVideo[]>("/videos")
+    Promise.all([
+      apiFetch<Folder[]>("/folders"),
+      fetch("/api/admin/vsl-config").then((r) => r.json()).catch(() => ({ allowedFolderIds: [] })),
+    ])
+      .then(([allFolders, config]) => {
+        const allowed: string[] = config.allowedFolderIds || [];
+        const visibleFolders = allowed.length > 0
+          ? allFolders.filter((f: Folder) => allowed.includes(f.id))
+          : allFolders;
+        setFolders(visibleFolders);
+        if (visibleFolders.length > 0 && !selectedFolderId) {
+          setSelectedFolderId(visibleFolders[0].id);
+        }
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [apiToken]);
+
+  useEffect(() => {
+    if (!selectedFolderId) return;
+    apiFetch<VidalyticsVideo[]>(`/videos?folder_id=${selectedFolderId}`)
       .then((vids) => {
         setVideos(vids);
         if (vids.length > 0 && !selectedVideoId) {
@@ -120,7 +144,7 @@ export default function AnalyticsPage() {
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiToken]);
+  }, [selectedFolderId, apiToken]);
 
   useEffect(() => {
     if (!selectedVideoId) return;
@@ -181,7 +205,7 @@ export default function AnalyticsPage() {
 
   const handleExportCSV = () => {
     if (timeline.length === 0) return;
-    const headers = ["Data", "Play", "Unique Play", "Impressioni", "Conversioni", "Tempo Medio", "% Visto", "CTA Click"];
+    const headers = ["Date", "Plays", "Unique Plays", "Impressions", "Conversions", "Avg Watch Time", "% Watched", "CTA Clicks"];
     const rows = timeline.map((t) => [
       t.date,
       String(t.plays),
@@ -203,9 +227,9 @@ export default function AnalyticsPage() {
   };
 
   const ranges: { label: string; value: DateRange }[] = [
-    { label: "7G", value: "7d" },
-    { label: "14G", value: "14d" },
-    { label: "30G", value: "30d" },
+    { label: "7D", value: "7d" },
+    { label: "14D", value: "14d" },
+    { label: "30D", value: "30d" },
   ];
 
   const chartTimeline = timeline.map((t) => ({
@@ -216,7 +240,7 @@ export default function AnalyticsPage() {
   }));
 
   const segmentChartData = segments.map((s) => ({
-    name: s.segment_value || "Sconosciuto",
+    name: s.segment_value || "Unknown",
     plays: s.plays,
   }));
 
@@ -224,12 +248,34 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Analytics Avanzate</h1>
+          <h1 className="text-2xl font-bold">Advanced Analytics</h1>
           <p className="text-muted-foreground">
-            Analisi dettagliata delle performance per video
+            Detailed performance analysis per video
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {folders.length > 1 && (
+            <div className="flex items-center gap-1.5">
+              <FolderOpen className="h-4 w-4 text-muted-foreground" />
+              <select
+                value={selectedFolderId || ""}
+                onChange={(e) => {
+                  setSelectedFolderId(e.target.value);
+                  setSelectedVideoId(null);
+                  setStats(null);
+                  setTimeline([]);
+                  setSegments([]);
+                }}
+                className="h-10 rounded-lg border border-border bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              >
+                {folders.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name} ({f.videoCount ?? f.video_count ?? 0})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <select
             value={selectedVideoId || ""}
             onChange={(e) => setSelectedVideoId(e.target.value)}
@@ -268,7 +314,7 @@ export default function AnalyticsPage() {
               </span>
             )}
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleExportCSV} disabled={timeline.length === 0} title="Esporta CSV">
+            <Button variant="ghost" size="sm" onClick={handleExportCSV} disabled={timeline.length === 0} title="Export CSV">
             <Download className="h-4 w-4" />
           </Button>
         </div>
@@ -280,39 +326,39 @@ export default function AnalyticsPage() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-semibold">Filtri Avanzati</h3>
+              <h3 className="text-sm font-semibold">Advanced Filters</h3>
               <Badge variant="info">Enterprise</Badge>
             </div>
             {activeFilterCount > 0 && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
                 <X className="h-3 w-3" />
-                Reset filtri
+                Reset Filters
               </Button>
             )}
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-1">
               <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                <Globe className="h-3 w-3" /> Paese
+                <Globe className="h-3 w-3" /> Country
               </label>
               <input
                 type="text"
                 value={filterCountry}
                 onChange={(e) => setFilterCountry(e.target.value)}
-                placeholder="es. IT, US, DE"
+                placeholder="e.g. US, GB, DE"
                 className="h-8 w-full rounded-lg border border-border bg-white px-2 text-sm outline-none focus:border-primary"
               />
             </div>
             <div className="space-y-1">
               <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                <Monitor className="h-3 w-3" /> Dispositivo
+                <Monitor className="h-3 w-3" /> Device
               </label>
               <select
                 value={filterDevice}
                 onChange={(e) => setFilterDevice(e.target.value)}
                 className="h-8 w-full rounded-lg border border-border bg-white px-2 text-sm outline-none focus:border-primary"
               >
-                <option value="">Tutti</option>
+                <option value="">All</option>
                 <option value="desktop">Desktop</option>
                 <option value="mobile">Mobile</option>
                 <option value="tablet">Tablet</option>
@@ -327,7 +373,7 @@ export default function AnalyticsPage() {
                 onChange={(e) => setFilterBrowser(e.target.value)}
                 className="h-8 w-full rounded-lg border border-border bg-white px-2 text-sm outline-none focus:border-primary"
               >
-                <option value="">Tutti</option>
+                <option value="">All</option>
                 <option value="chrome">Chrome</option>
                 <option value="safari">Safari</option>
                 <option value="firefox">Firefox</option>
@@ -336,14 +382,14 @@ export default function AnalyticsPage() {
             </div>
             <div className="space-y-1">
               <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                <Laptop className="h-3 w-3" /> Sistema Operativo
+                <Laptop className="h-3 w-3" /> Operating System
               </label>
               <select
                 value={filterOs}
                 onChange={(e) => setFilterOs(e.target.value)}
                 className="h-8 w-full rounded-lg border border-border bg-white px-2 text-sm outline-none focus:border-primary"
               >
-                <option value="">Tutti</option>
+                <option value="">All</option>
                 <option value="windows">Windows</option>
                 <option value="macos">macOS</option>
                 <option value="ios">iOS</option>
@@ -357,7 +403,7 @@ export default function AnalyticsPage() {
                 type="text"
                 value={filterReferrer}
                 onChange={(e) => setFilterReferrer(e.target.value)}
-                placeholder="es. google.com"
+                placeholder="e.g. google.com"
                 className="h-8 w-full rounded-lg border border-border bg-white px-2 text-sm outline-none focus:border-primary"
               />
             </div>
@@ -367,7 +413,7 @@ export default function AnalyticsPage() {
                 type="text"
                 value={filterUrlParam}
                 onChange={(e) => setFilterUrlParam(e.target.value)}
-                placeholder="es. utm_source"
+                placeholder="e.g. utm_source"
                 className="h-8 w-full rounded-lg border border-border bg-white px-2 text-sm outline-none focus:border-primary"
               />
             </div>
@@ -377,7 +423,7 @@ export default function AnalyticsPage() {
                 type="text"
                 value={filterUrlParamValue}
                 onChange={(e) => setFilterUrlParamValue(e.target.value)}
-                placeholder="es. facebook"
+                placeholder="e.g. facebook"
                 className="h-8 w-full rounded-lg border border-border bg-white px-2 text-sm outline-none focus:border-primary"
               />
             </div>
@@ -399,12 +445,12 @@ export default function AnalyticsPage() {
             icon={<Play className="h-5 w-5 text-primary" />}
           />
           <StatCard
-            label="Impressioni"
-            value={formatNumber(stats.impressions)}
-            icon={<Eye className="h-5 w-5 text-primary" />}
-          />
-          <StatCard
-            label="Tempo Medio"
+          label="Impressions"
+          value={formatNumber(stats.impressions)}
+          icon={<Eye className="h-5 w-5 text-primary" />}
+        />
+        <StatCard
+          label="Avg Watch Time"
             value={formatDuration(stats.avg_watch_time)}
             icon={<Clock className="h-5 w-5 text-primary" />}
           />
@@ -423,13 +469,13 @@ export default function AnalyticsPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <AreaChartCard
-          title="Timeline Play & Conversioni"
+          title="Plays & Conversions Timeline"
           data={chartTimeline.length > 0 ? chartTimeline : [{ name: "-", plays: 0, conversions: 0, impressions: 0 }]}
           dataKey="plays"
           secondaryKey="conversions"
         />
         <AreaChartCard
-          title="Impressioni nel Tempo"
+          title="Impressions Over Time"
           data={chartTimeline.length > 0 ? chartTimeline : [{ name: "-", plays: 0, conversions: 0, impressions: 0 }]}
           dataKey="impressions"
           color="#f97316"
@@ -443,9 +489,9 @@ export default function AnalyticsPage() {
               <BarChart3 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h2 className="font-semibold">Report Segmentato</h2>
+              <h2 className="font-semibold">Segmented Report</h2>
               <p className="text-sm text-muted-foreground">
-                Analisi per {segmentLabels[segmentType].toLowerCase()}
+                Analysis by {segmentLabels[segmentType].toLowerCase()}
                 {" "}(Enterprise)
               </p>
             </div>
@@ -467,7 +513,7 @@ export default function AnalyticsPage() {
                 </button>
               ))}
             </div>
-            <Button variant="ghost" size="sm" onClick={handleExportStats} disabled={!stats} title="Esporta JSON">
+            <Button variant="ghost" size="sm" onClick={handleExportStats} disabled={!stats} title="Export JSON">
               <Download className="h-4 w-4" />
             </Button>
           </div>
@@ -497,7 +543,7 @@ export default function AnalyticsPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 text-sm">
-                    <Badge variant="info">{formatPercent(seg.avg_percent_watched)} visto</Badge>
+                    <Badge variant="info">{formatPercent(seg.avg_percent_watched)} watched</Badge>
                     <Badge variant="success">{seg.conversions} conv.</Badge>
                   </div>
                 </div>
@@ -506,7 +552,7 @@ export default function AnalyticsPage() {
           </div>
         ) : (
           <div className="py-8 text-center text-sm text-muted-foreground">
-            Nessun dato segmentato disponibile. Questa funzione richiede il piano Enterprise.
+            No segmented data available. This feature requires the Enterprise plan.
           </div>
         )}
       </Card>

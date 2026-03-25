@@ -36,44 +36,44 @@ export async function POST(req: NextRequest) {
   }
 
   const prompt = frameBase64
-    ? `Sei un analista visivo esperto di Video Sales Letters (VSL). Ti viene mostrato il frame esatto al timestamp ${timestampLabel} (secondo ${timestamp}) del video "${videoName}", dove c'è un drop del ${dropPct?.toFixed(1)}% degli spettatori (retention: ${retentionBefore?.toFixed(1)}% → ${retentionAfter?.toFixed(1)}%).
+    ? `You are an expert visual analyst of Video Sales Letters (VSL). You are shown the exact frame at timestamp ${timestampLabel} (second ${timestamp}) of the video "${videoName}", where there is a ${dropPct?.toFixed(1)}% viewer drop (retention: ${retentionBefore?.toFixed(1)}% → ${retentionAfter?.toFixed(1)}%).
 
-${transcriptContext ? `In questo momento il narratore sta dicendo: "${transcriptContext}"` : ""}
+${transcriptContext ? `At this moment the narrator is saying: "${transcriptContext}"` : ""}
 
-ANALIZZA IL FRAME E DESCRIVI IN DETTAGLIO COSA SI VEDE. Rispondi SOLO con quello che è visivamente presente nell'immagine:
+ANALYZE THE FRAME AND DESCRIBE IN DETAIL WHAT YOU SEE. Respond ONLY with what is visually present in the image:
 
-### Elementi Visivi Presenti
-Elenca e descrivi OGNI elemento visibile nel frame:
-- **Persone**: Chi appare? Come sono vestiti? Espressione facciale? Postura? Linguaggio del corpo?
-- **Testo sullo schermo**: Riporta ESATTAMENTE ogni parola/testo/titolo/headline visibile nel frame
-- **Grafiche/Slide**: Ci sono slide, grafici, diagrammi, immagini sovrapposte? Descrivili nel dettaglio
-- **Sfondo/Ambientazione**: Dove è girata la scena? (studio, casa, ufficio, schermo di registrazione, ecc.)
-- **Colori dominanti**: Quali colori prevalgono nel frame?
-- **Layout**: Come è composto il frame? (facecam + slide, solo slide, solo persona, schermo condiviso, ecc.)
+### Visual elements present
+List and describe EVERY visible element in the frame:
+- **People**: Who appears? How are they dressed? Facial expression? Posture? Body language?
+- **On-screen text**: Report EXACTLY every word/text/title/headline visible in the frame
+- **Graphics/slides**: Are there slides, charts, diagrams, overlaid images? Describe them in detail
+- **Background/setting**: Where was the scene shot? (studio, home, office, recording screen, etc.)
+- **Dominant colors**: Which colors prevail in the frame?
+- **Layout**: How is the frame composed? (facecam + slide, slide only, person only, shared screen, etc.)
 
-### Qualità Produzione
-- Illuminazione (professionale, naturale, scarsa)
-- Risoluzione/nitidezza percepita
-- Presenza di elementi grafici brandizzati (logo, lower third, ecc.)
+### Production quality
+- Lighting (professional, natural, poor)
+- Perceived resolution/sharpness
+- Presence of branded graphic elements (logo, lower third, etc.)
 
-### Possibile Impatto Visivo sul Drop
-Basandoti SOLO su ciò che vedi, quale elemento visivo potrebbe causare l'abbandono degli spettatori in questo punto? (es. slide troppo piena di testo, assenza di varietà visiva, frame statico, scarsa qualità, ecc.)
+### Possible visual impact on the drop
+Based ONLY on what you see, which visual element could cause viewers to drop off at this point? (e.g. slide too text-heavy, lack of visual variety, static frame, poor quality, etc.)
 
-Sii estremamente specifico e oggettivo. Descrivi SOLO quello che vedi realmente nel frame. Non inventare. Rispondi in italiano.`
-    : `Sei un analista di Video Sales Letters (VSL). Al timestamp ${timestampLabel} (secondo ${timestamp}) del video "${videoName}" c'è un drop del ${dropPct?.toFixed(1)}% degli spettatori.
+Be extremely specific and objective. Describe ONLY what you actually see in the frame. Do not make things up. Respond in English.`
+    : `You are a Video Sales Letters (VSL) analyst. At timestamp ${timestampLabel} (second ${timestamp}) of the video "${videoName}" there is a ${dropPct?.toFixed(1)}% viewer drop.
 
-${transcriptContext ? `Il narratore sta dicendo: "${transcriptContext}"` : "Trascrizione non disponibile."}
+${transcriptContext ? `The narrator is saying: "${transcriptContext}"` : "Transcript not available."}
 
-NOTA: Il frame del video non è disponibile per questo timestamp. Fornisci un'analisi basata SOLO sulla trascrizione e sul contesto temporale.
+NOTE: The video frame is not available for this timestamp. Provide an analysis based ONLY on the transcript and temporal context.
 
-### Analisi del Contenuto
-- In che fase della VSL siamo probabilmente? (hook, problema, agitazione, soluzione, prova sociale, offerta, CTA, ecc.)
-- Cosa sta comunicando il narratore in questo punto?
+### Content analysis
+- What phase of the VSL are we likely in? (hook, problem, agitation, solution, social proof, offer, CTA, etc.)
+- What is the narrator communicating at this point?
 
-### Possibili Cause del Drop
-Basandoti sul testo e sulla posizione temporale nel video, perché gli spettatori potrebbero abbandonare qui?
+### Possible causes of the drop
+Based on the text and temporal position in the video, why might viewers drop off here?
 
-Sii breve e pratico. Rispondi in italiano.`;
+Be brief and practical. Respond in English.`;
 
   parts.push({ text: prompt });
 
@@ -104,7 +104,7 @@ Sii breve e pratico. Rispondi in italiano.`;
     const data = await response.json();
     const text =
       data.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "Analisi non disponibile.";
+      "Analysis not available.";
 
     return NextResponse.json({ analysis: text });
   } catch (e: unknown) {

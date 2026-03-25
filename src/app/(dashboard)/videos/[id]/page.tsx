@@ -216,7 +216,7 @@ export default function VideoBreakdownPage() {
       const data = await res.json();
       setAnalysis(data.analysis);
     } catch {
-      setAnalysis("Errore durante l'analisi. Verifica che ANTHROPIC_API_KEY sia configurata.");
+      setAnalysis("Error during analysis. Verify that ANTHROPIC_API_KEY is configured.");
     } finally {
       setAnalysisLoading(false);
     }
@@ -248,11 +248,11 @@ export default function VideoBreakdownPage() {
     return (
       <div className="space-y-6">
         <Button variant="ghost" size="sm" onClick={() => router.push("/videos")}>
-          <ArrowLeft className="h-4 w-4" /> Torna ai Video
+          <ArrowLeft className="h-4 w-4" /> Back to Videos
         </Button>
         <Card className="py-12 text-center">
           <AlertTriangle className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-3 text-muted-foreground">Video non trovato</p>
+          <p className="mt-3 text-muted-foreground">Video not found</p>
         </Card>
       </div>
     );
@@ -280,11 +280,11 @@ export default function VideoBreakdownPage() {
                 {video.status || "active"}
               </Badge>
               <span className="text-sm text-muted-foreground">
-                Creato: {new Date(video.created_at).toLocaleDateString("it-IT")}
+                Created: {new Date(video.created_at).toLocaleDateString("en-US")}
               </span>
               {video.duration && (
                 <span className="text-sm text-muted-foreground">
-                  · Durata: {formatDuration(video.duration)}
+                  · Duration: {formatDuration(video.duration)}
                 </span>
               )}
             </div>
@@ -296,13 +296,13 @@ export default function VideoBreakdownPage() {
       {stats && (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard
-            label="Play Totali"
+            label="Total Plays"
             value={formatNumber(stats.plays)}
-            change={`${formatNumber(stats.unique_plays)} unici`}
+            change={`${formatNumber(stats.unique_plays)} unique`}
             icon={<Play className="h-5 w-5 text-primary" />}
           />
           <StatCard
-            label="Impressioni"
+            label="Impressions"
             value={formatNumber(stats.impressions)}
             change={`Play Rate: ${formatPercent(stats.play_rate)}`}
             changeType={stats.play_rate > 0.3 ? "positive" : stats.play_rate > 0.15 ? "neutral" : "negative"}
@@ -310,20 +310,20 @@ export default function VideoBreakdownPage() {
           />
           <StatCard
             label="Unmute Rate"
-            value={stats.unmute_rate ? formatPercent(stats.unmute_rate) : "N/D"}
-            change={stats.unmute_rate && stats.unmute_rate > 0.5 ? "Buon engagement audio" : stats.unmute_rate ? "Sotto la media" : undefined}
+            value={stats.unmute_rate ? formatPercent(stats.unmute_rate) : "N/A"}
+            change={stats.unmute_rate && stats.unmute_rate > 0.5 ? "Good audio engagement" : stats.unmute_rate ? "Below average" : undefined}
             changeType={stats.unmute_rate && stats.unmute_rate > 0.5 ? "positive" : "negative"}
             icon={<Volume2 className="h-5 w-5 text-primary" />}
           />
           <StatCard
-            label="Tempo Medio"
+            label="Avg Watch Time"
             value={formatDuration(stats.avg_watch_time)}
-            change={`${formatPercent(stats.avg_percent_watched)} del video`}
+            change={`${formatPercent(stats.avg_percent_watched)} of video`}
             changeType={stats.avg_percent_watched > 0.4 ? "positive" : stats.avg_percent_watched > 0.2 ? "neutral" : "negative"}
             icon={<Clock className="h-5 w-5 text-primary" />}
           />
           <StatCard
-            label="Conversioni"
+            label="Conversions"
             value={formatNumber(stats.conversions)}
             change={`Rate: ${formatPercent(stats.conversion_rate)}`}
             changeType={stats.conversion_rate > 0.03 ? "positive" : stats.conversion_rate > 0.01 ? "neutral" : "negative"}
@@ -337,15 +337,15 @@ export default function VideoBreakdownPage() {
             icon={<MousePointerClick className="h-5 w-5 text-primary" />}
           />
           <StatCard
-            label="Spettatori Unici"
+            label="Unique Viewers"
             value={formatNumber(stats.unique_plays)}
-            change={`su ${formatNumber(stats.plays)} play totali`}
+            change={`of ${formatNumber(stats.plays)} total plays`}
             icon={<Users className="h-5 w-5 text-primary" />}
           />
           <StatCard
-            label="% Media Guardata"
+            label="Avg % Watched"
             value={formatPercent(stats.avg_percent_watched)}
-            change={stats.avg_percent_watched > 0.5 ? "Ottima retention" : "Migliorabile"}
+            change={stats.avg_percent_watched > 0.5 ? "Great retention" : "Room for improvement"}
             changeType={stats.avg_percent_watched > 0.5 ? "positive" : "negative"}
             icon={<Target className="h-5 w-5 text-primary" />}
           />
@@ -358,10 +358,10 @@ export default function VideoBreakdownPage() {
           <div>
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-primary" />
-              Curva di Retention (Frame by Frame)
+              Retention Curve (Frame by Frame)
             </h3>
             <p className="text-sm text-muted-foreground mt-0.5">
-              Percentuale di spettatori che guardano ogni secondo del video
+              Percentage of viewers watching each second of the video
             </p>
           </div>
         </div>
@@ -403,7 +403,7 @@ export default function VideoBreakdownPage() {
                           Retention: <span className="font-medium text-primary">{d.retention.toFixed(1)}%</span>
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Spettatori: <span className="font-medium">{formatNumber(d.viewers)}</span>
+                          Viewers: <span className="font-medium">{formatNumber(d.viewers)}</span>
                         </p>
                       </div>
                     );
@@ -445,7 +445,7 @@ export default function VideoBreakdownPage() {
                     className="rounded-lg border border-border bg-secondary/30 p-3 text-center"
                   >
                     <p className="text-xs font-medium text-muted-foreground">
-                      Sotto {m.threshold}% retention
+                      Below {m.threshold}% retention
                     </p>
                     <p className="mt-1 text-lg font-bold text-foreground">{m.label}</p>
                   </div>
@@ -458,7 +458,7 @@ export default function VideoBreakdownPage() {
               <div className="mt-4">
                 <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1.5">
                   <AlertTriangle className="h-4 w-4 text-danger" />
-                  Punti Critici di Drop-Off
+                  Critical Drop-Off Points
                 </h4>
                 <div className="space-y-1.5">
                   {criticalPoints.map((cp) => (
@@ -474,7 +474,7 @@ export default function VideoBreakdownPage() {
                         />
                       </div>
                       <span className="text-muted-foreground">
-                        -{cp.dropPct.toFixed(1)}% degli spettatori
+                        -{cp.dropPct.toFixed(1)}% of viewers
                       </span>
                     </div>
                   ))}
@@ -485,7 +485,7 @@ export default function VideoBreakdownPage() {
         ) : (
           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
             <BarChart3 className="h-8 w-8 mb-2" />
-            <p>Dati di drop-off non disponibili per questo video</p>
+            <p>Drop-off data not available for this video</p>
           </div>
         )}
       </Card>
@@ -493,14 +493,14 @@ export default function VideoBreakdownPage() {
       {/* Timeline */}
       {timeline.length > 0 && (
         <AreaChartCard
-          title="Andamento Play e Conversioni nel Tempo"
+          title="Plays & Conversions Over Time"
           data={timeline.map((t) => ({
             name: formatDateShort(t.date),
             plays: t.plays,
-            conversioni: t.conversions,
+            conversions: t.conversions,
           }))}
           dataKey="plays"
-          secondaryKey="conversioni"
+          secondaryKey="conversions"
         />
       )}
 
@@ -509,7 +509,7 @@ export default function VideoBreakdownPage() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold flex items-center gap-2">
             <Globe className="h-5 w-5 text-primary" />
-            Analisi Segmentata
+            Segmented Analysis
           </h3>
           <div className="flex gap-1">
             {(["device", "country", "browser", "os"] as const).map((seg) => (
@@ -535,7 +535,7 @@ export default function VideoBreakdownPage() {
                 {seg === "country" && <Globe className="h-3.5 w-3.5" />}
                 {seg === "browser" && <Globe className="h-3.5 w-3.5" />}
                 {seg === "os" && <Smartphone className="h-3.5 w-3.5" />}
-                {seg === "device" ? "Dispositivo" : seg === "country" ? "Paese" : seg === "browser" ? "Browser" : "OS"}
+                {seg === "device" ? "Device" : seg === "country" ? "Country" : seg === "browser" ? "Browser" : "OS"}
               </button>
             ))}
           </div>
@@ -573,7 +573,7 @@ export default function VideoBreakdownPage() {
           </div>
         ) : (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            Nessun dato segmentato disponibile
+            No segmented data available
           </p>
         )}
       </Card>
@@ -586,9 +586,9 @@ export default function VideoBreakdownPage() {
               <Sparkles className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold">Analisi AI del Video</h3>
+              <h3 className="text-lg font-semibold">AI Video Analysis</h3>
               <p className="text-sm text-muted-foreground">
-                Claude analizza le performance del tuo video frame by frame
+                Claude analyzes your video performance frame by frame
               </p>
             </div>
           </div>
@@ -611,17 +611,17 @@ export default function VideoBreakdownPage() {
               {analysisLoading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Analizzando...
+                  Analyzing...
                 </>
               ) : analysis ? (
                 <>
                   <RefreshCw className="h-4 w-4" />
-                  Rigenera
+                  Regenerate
                 </>
               ) : (
                 <>
                   <Zap className="h-4 w-4" />
-                  Analizza con AI
+                  Analyze with AI
                 </>
               )}
             </Button>
@@ -635,10 +635,10 @@ export default function VideoBreakdownPage() {
               <div className="absolute inset-0 h-16 w-16 animate-spin rounded-full border-4 border-transparent border-t-primary" />
             </div>
             <p className="mt-4 text-sm font-medium text-muted-foreground">
-              Claude sta analizzando il tuo video...
+              Claude is analyzing your video...
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Analisi della curva di retention, metriche e segmenti
+              Analyzing retention curve, metrics, and segments
             </p>
           </div>
         )}
@@ -653,8 +653,8 @@ export default function VideoBreakdownPage() {
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <Sparkles className="h-8 w-8 text-muted-foreground/40 mb-2" />
             <p className="text-sm text-muted-foreground">
-              Clicca &quot;Analizza con AI&quot; per ottenere un&apos;analisi dettagliata delle
-              performance del video, inclusi hook, retention, e suggerimenti di miglioramento.
+              Click &quot;Analyze with AI&quot; to get a detailed analysis of your
+              video performance, including hook, retention, and improvement suggestions.
             </p>
           </div>
         )}

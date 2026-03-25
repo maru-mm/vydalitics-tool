@@ -141,7 +141,7 @@ export default function VideosPage() {
       const data = await apiFetch<{ html: string }>(`/videos/${videoId}/embed`, { params });
       setEmbedCode(data.html);
     } catch {
-      setEmbedCode("Errore nel recupero del codice embed");
+      setEmbedCode("Error retrieving embed code");
     } finally {
       setLoadingEmbed(false);
     }
@@ -265,7 +265,7 @@ export default function VideosPage() {
   // Export CSV
   const handleExportCSV = () => {
     if (videos.length === 0) return;
-    const headers = ["Nome", "ID", "Stato", "Play", "Impressioni", "Tempo Medio", "Conv. Rate", "CTA Clicks", "Tags", "Creato"];
+    const headers = ["Name", "ID", "Status", "Plays", "Impressions", "Avg Watch Time", "Conv. Rate", "CTA Clicks", "Tags", "Created"];
     const rows = videos.map((v) => [
       v.name,
       v.id,
@@ -301,7 +301,7 @@ export default function VideosPage() {
       setScriptText(data.text);
     } catch (err) {
       setScriptError(
-        err instanceof Error ? err.message : "Errore nel recupero dello script"
+        err instanceof Error ? err.message : "Error retrieving script"
       );
     } finally {
       setScriptLoading(false);
@@ -333,7 +333,7 @@ export default function VideosPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold">Video</h1>
-          <p className="text-muted-foreground">Gestisci e analizza i tuoi video</p>
+          <p className="text-muted-foreground">Manage and analyze your videos</p>
         </div>
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
@@ -350,15 +350,15 @@ export default function VideosPage() {
         <div>
           <h1 className="text-2xl font-bold">Video</h1>
           <p className="text-muted-foreground">
-            {videos.length} video
+            {videos.length} video{videos.length !== 1 ? "s" : ""}
             {selectedFolderId
-              ? ` nella cartella "${folders.find((f) => f.id === selectedFolderId)?.name || ""}"`
-              : " nel tuo account"}
+              ? ` in folder "${folders.find((f) => f.id === selectedFolderId)?.name || ""}"`
+              : " in your account"}
           </p>
         </div>
         <Button variant="ghost" size="sm" onClick={handleExportCSV} disabled={videos.length === 0}>
           <Download className="h-4 w-4" />
-          Esporta CSV
+          Export CSV
         </Button>
       </div>
 
@@ -373,7 +373,7 @@ export default function VideosPage() {
             }`}
           >
             <FolderOpen className="h-3.5 w-3.5" />
-            Tutti
+            All
           </button>
           {folders.map((f) => (
             <button
@@ -396,8 +396,8 @@ export default function VideosPage() {
       {videos.length === 0 ? (
         <EmptyState
           icon={<Video className="h-8 w-8" />}
-          title="Nessun video"
-          description="Non ci sono video nel tuo account Vidalytics."
+          title="No videos"
+          description="There are no videos in your Vidalytics account."
         />
       ) : (
         <div className="space-y-3">
@@ -440,7 +440,7 @@ export default function VideosPage() {
                       ))}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Creato: {new Date(video.created_at).toLocaleDateString("it-IT")}
+                      Created: {new Date(video.created_at).toLocaleDateString("en-US")}
                       {video.duration && ` · ${formatDuration(video.duration)}`}
                     </p>
                   </div>
@@ -481,7 +481,7 @@ export default function VideosPage() {
                     <Button variant="ghost" size="sm" onClick={() => handleExpand(video.id)} title="Timeline">
                       {expandedVideo === video.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleStartEdit(video)} title="Modifica">
+                    <Button variant="ghost" size="sm" onClick={() => handleStartEdit(video)} title="Edit">
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
@@ -498,11 +498,11 @@ export default function VideosPage() {
                     <Button variant="ghost" size="sm" onClick={() => handleGetEmbed(video.id)} title="Embed">
                       <Code className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteVideoId(video.id)} title="Elimina">
+                    <Button variant="ghost" size="sm" onClick={() => setDeleteVideoId(video.id)} title="Delete">
                       <Trash2 className="h-4 w-4 text-danger" />
                     </Button>
                     <a href={`https://app.vidalytics.com/videos/${video.id}`} target="_blank" rel="noopener noreferrer">
-                      <Button variant="ghost" size="sm" title="Apri in Vidalytics">
+                      <Button variant="ghost" size="sm" title="Open in Vidalytics">
                         <ExternalLink className="h-4 w-4" />
                       </Button>
                     </a>
@@ -518,7 +518,7 @@ export default function VideosPage() {
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && handleAddTag()}
-                      placeholder="Aggiungi tag..."
+                      placeholder="Add tag..."
                       className="h-8 flex-1 rounded-lg border border-border bg-white px-3 text-sm outline-none focus:border-primary"
                     />
                     <Button size="sm" onClick={handleAddTag} disabled={!newTag.trim() || savingTag}>
@@ -546,7 +546,7 @@ export default function VideosPage() {
                     />
                   ) : (
                     <Card className="py-6 text-center text-sm text-muted-foreground">
-                      Nessun dato timeline disponibile per questo video.
+                      No timeline data available for this video.
                     </Card>
                   )}
                 </div>
@@ -561,25 +561,25 @@ export default function VideosPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <Card className="w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Modifica Video</h3>
+              <h3 className="font-semibold">Edit Video</h3>
               <Button variant="ghost" size="sm" onClick={() => setEditingVideoId(null)}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
             <div className="space-y-4">
               <Input
-                label="Nome"
+                label="Name"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
               />
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-foreground">Cartella</label>
+                <label className="text-sm font-medium text-foreground">Folder</label>
                 <select
                   value={editFolderId}
                   onChange={(e) => setEditFolderId(e.target.value)}
                   className="h-10 w-full rounded-lg border border-border bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
                 >
-                  <option value="">Nessuna cartella</option>
+                  <option value="">No folder</option>
                   {folders.map((f) => (
                     <option key={f.id} value={f.id}>
                       {f.name}
@@ -589,11 +589,11 @@ export default function VideosPage() {
               </div>
               <div className="flex justify-end gap-3">
                 <Button variant="ghost" onClick={() => setEditingVideoId(null)}>
-                  Annulla
+                  Cancel
                 </Button>
                 <Button onClick={handleSaveEdit} disabled={savingEdit}>
                   {savingEdit ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                  Salva
+                  Save
                 </Button>
               </div>
             </div>
@@ -609,18 +609,18 @@ export default function VideosPage() {
               <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-danger/10">
                 <Trash2 className="h-6 w-6 text-danger" />
               </div>
-              <h3 className="mt-4 font-semibold">Elimina Video</h3>
+              <h3 className="mt-4 font-semibold">Delete Video</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Sei sicuro di voler eliminare &quot;{videos.find((v) => v.id === deleteVideoId)?.name}&quot;?
-                Questa azione non può essere annullata.
+                Are you sure you want to delete &quot;{videos.find((v) => v.id === deleteVideoId)?.name}&quot;?
+                This action cannot be undone.
               </p>
               <div className="mt-6 flex justify-center gap-3">
                 <Button variant="ghost" onClick={() => setDeleteVideoId(null)}>
-                  Annulla
+                  Cancel
                 </Button>
                 <Button variant="danger" onClick={handleDelete} disabled={deleting}>
                   {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                  Elimina
+                  Delete
                 </Button>
               </div>
             </div>
@@ -633,7 +633,7 @@ export default function VideosPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <Card className="w-full max-w-lg">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Codice Embed</h3>
+              <h3 className="font-semibold">Embed Code</h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -675,7 +675,7 @@ export default function VideosPage() {
                 Responsive
               </label>
               <Button variant="secondary" size="sm" onClick={refreshEmbed} disabled={loadingEmbed}>
-                {loadingEmbed ? <Loader2 className="h-3 w-3 animate-spin" /> : "Aggiorna"}
+                {loadingEmbed ? <Loader2 className="h-3 w-3 animate-spin" /> : "Refresh"}
               </Button>
             </div>
 
@@ -695,11 +695,11 @@ export default function VideosPage() {
               <Button size="sm" onClick={handleCopy} disabled={!embedCode}>
                 {copied ? (
                   <>
-                    <Check className="h-4 w-4" /> Copiato!
+                    <Check className="h-4 w-4" /> Copied!
                   </>
                 ) : (
                   <>
-                    <Copy className="h-4 w-4" /> Copia
+                    <Copy className="h-4 w-4" /> Copy
                   </>
                 )}
               </Button>
@@ -714,7 +714,7 @@ export default function VideosPage() {
           <Card className="w-full max-w-2xl">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-semibold">Script VSL</h3>
+                <h3 className="font-semibold">VSL Script</h3>
                 <p className="text-sm text-muted-foreground">
                   {videos.find((v) => v.id === scriptVideoId)?.name}
                 </p>
@@ -735,12 +735,12 @@ export default function VideosPage() {
             {scriptLoading ? (
               <div className="flex flex-col items-center justify-center py-12 gap-3">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Recupero script in corso...</p>
+                <p className="text-sm text-muted-foreground">Retrieving script...</p>
               </div>
             ) : scriptError ? (
               <div className="rounded-lg border border-danger/20 bg-danger/5 p-6 text-center">
                 <FileText className="mx-auto h-8 w-8 text-danger/60 mb-3" />
-                <p className="text-sm text-danger font-medium mb-1">Script non disponibile</p>
+                <p className="text-sm text-danger font-medium mb-1">Script not available</p>
                 <p className="text-xs text-muted-foreground">{scriptError}</p>
               </div>
             ) : scriptText ? (
@@ -756,16 +756,16 @@ export default function VideosPage() {
                 <Button variant="secondary" size="sm" onClick={handleCopyScript}>
                   {scriptCopied ? (
                     <>
-                      <Check className="h-4 w-4" /> Copiato!
+                      <Check className="h-4 w-4" /> Copied!
                     </>
                   ) : (
                     <>
-                      <Copy className="h-4 w-4" /> Copia
+                      <Copy className="h-4 w-4" /> Copy
                     </>
                   )}
                 </Button>
                 <Button size="sm" onClick={handleDownloadScript}>
-                  <Download className="h-4 w-4" /> Scarica .txt
+                  <Download className="h-4 w-4" /> Download .txt
                 </Button>
               </div>
             )}

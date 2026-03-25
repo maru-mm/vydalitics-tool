@@ -30,38 +30,38 @@ export async function POST(req: NextRequest) {
         i: number
       ) =>
         `Drop #${i + 1} (${d.timestampLabel}): -${d.dropPct.toFixed(1)}% retention (${d.retentionBefore.toFixed(1)}% → ${d.retentionAfter.toFixed(1)}%)
-Trascrizione: "${d.transcriptContext}"
-Analisi Gemini: ${d.geminiAnalysis || "N/D"}`
+Transcript: "${d.transcriptContext}"
+Gemini analysis: ${d.geminiAnalysis || "N/A"}`
     )
     .join("\n\n");
 
-  const prompt = `Sei un esperto world-class di Video Sales Letters (VSL) e copywriting. Analizza questa VSL "${videoName}" e i suoi punti critici di drop-off.
+  const prompt = `You are a world-class expert in Video Sales Letters (VSL) and copywriting. Analyze this VSL "${videoName}" and its critical drop-off points.
 
-## Metriche Video
-- Play: ${stats?.plays || "N/D"}, Unici: ${stats?.unique_plays || "N/D"}
-- % Media Guardata: ${stats?.avg_percent_watched ? (stats.avg_percent_watched * 100).toFixed(1) + "%" : "N/D"}
-- Conversioni: ${stats?.conversions || 0} (Rate: ${stats?.conversion_rate ? (stats.conversion_rate * 100).toFixed(1) + "%" : "N/D"})
+## Video metrics
+- Plays: ${stats?.plays || "N/A"}, Unique: ${stats?.unique_plays || "N/A"}
+- Avg. % watched: ${stats?.avg_percent_watched ? (stats.avg_percent_watched * 100).toFixed(1) + "%" : "N/A"}
+- Conversions: ${stats?.conversions || 0} (Rate: ${stats?.conversion_rate ? (stats.conversion_rate * 100).toFixed(1) + "%" : "N/A"})
 
-## Trascrizione Completa
-${fullTranscript || "Non disponibile"}
+## Full transcript
+${fullTranscript || "Not available"}
 
-## Punti di Drop-Off
+## Drop-off points
 ${dropsContext}
 
 ---
 
-IMPORTANTE: Rispondi ESCLUSIVAMENTE con un JSON valido, senza markdown, senza backtick, senza testo extra.
-Il formato DEVE essere esattamente:
+IMPORTANT: Reply ONLY with valid JSON, no markdown, no backticks, no extra text.
+The format MUST be exactly:
 
 [
   {
     "dropIndex": 0,
-    "generalAnalysis": "Analisi generale di cosa succede in questo punto della VSL e perché è problematico (2-3 frasi in italiano)",
-    "suggestions": "3 suggerimenti concreti e specifici per migliorare questo punto, separati da punto e virgola (in italiano)"
+    "generalAnalysis": "General analysis of what happens at this point in the VSL and why it is problematic (2–3 sentences in English)",
+    "suggestions": "3 concrete, specific suggestions to improve this point, separated by semicolons (in English)"
   }
 ]
 
-Genera un elemento per OGNI drop (${drops.length} totali). Sii specifico, non generico. Basa ogni suggerimento sulla trascrizione reale della VSL.`;
+Generate one object for EVERY drop (${drops.length} total). Be specific, not generic. Base each suggestion on the actual VSL transcript.`;
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {

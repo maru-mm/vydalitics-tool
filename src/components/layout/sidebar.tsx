@@ -25,7 +25,7 @@ interface NavSection {
 const navSections: NavSection[] = [
   {
     items: [
-      { href: "/vsl-analysis", label: "Analisi VSL", icon: Microscope },
+      { href: "/vsl-analysis", label: "VSL Analysis", icon: Microscope },
     ],
   },
 ];

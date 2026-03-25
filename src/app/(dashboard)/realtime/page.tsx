@@ -47,7 +47,7 @@ export default function RealTimePage() {
         const next = [
           ...prev,
           {
-            time: new Date().toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" }),
+            time: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
             total,
           },
         ];
@@ -89,13 +89,13 @@ export default function RealTimePage() {
         <div>
           <h1 className="text-2xl font-bold">Real-Time</h1>
           <p className="text-muted-foreground">
-            Spettatori attivi in questo momento (Enterprise)
+            Active viewers right now (Enterprise)
           </p>
         </div>
         <div className="flex items-center gap-3">
           {lastUpdate && (
             <span className="text-sm text-muted-foreground">
-              Ultimo aggiornamento: {lastUpdate.toLocaleTimeString("it-IT")}
+              Last update: {lastUpdate.toLocaleTimeString("en-US")}
             </span>
           )}
           <Button
@@ -104,7 +104,7 @@ export default function RealTimePage() {
             onClick={() => setPaused(!paused)}
           >
             {paused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
-            {paused ? "Riprendi" : "Pausa"}
+            {paused ? "Resume" : "Pause"}
           </Button>
           <Button variant="ghost" size="sm" onClick={fetchMetrics}>
             <RefreshCw className="h-4 w-4" />
@@ -116,7 +116,7 @@ export default function RealTimePage() {
         <Card className="animate-fade-in">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Spettatori Attivi</p>
+              <p className="text-sm font-medium text-muted-foreground">Active Viewers</p>
               <p className="mt-2 text-4xl font-bold tracking-tight text-primary">
                 {formatNumber(totalViewers)}
               </p>
@@ -137,7 +137,7 @@ export default function RealTimePage() {
         <Card className="animate-fade-in">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Video Attivi</p>
+              <p className="text-sm font-medium text-muted-foreground">Active Videos</p>
               <p className="mt-2 text-4xl font-bold tracking-tight">
                 {sortedMetrics.length}
               </p>
@@ -147,14 +147,14 @@ export default function RealTimePage() {
             </div>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
-            su {videos.length} totali
+            of {videos.length} total
           </p>
         </Card>
 
         <Card className="animate-fade-in">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Aggiornamento</p>
+              <p className="text-sm font-medium text-muted-foreground">Refresh</p>
               <p className="mt-2 text-4xl font-bold tracking-tight">~1m</p>
             </div>
             <div className="rounded-lg bg-success/10 p-2.5">
@@ -162,14 +162,14 @@ export default function RealTimePage() {
             </div>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">
-            Polling ogni 60 secondi
+            Polling every 60 seconds
           </p>
         </Card>
       </div>
 
       {history.length > 1 && (
         <Card>
-          <h3 className="mb-4 text-sm font-semibold">Storico Spettatori (sessione)</h3>
+          <h3 className="mb-4 text-sm font-semibold">Viewer History (session)</h3>
           <div className="flex h-32 items-end gap-1">
             {history.map((h, i) => {
               const max = Math.max(...history.map((x) => x.total), 1);
@@ -179,7 +179,7 @@ export default function RealTimePage() {
                   <div
                     className="w-full rounded-t bg-primary/60 transition-all hover:bg-primary"
                     style={{ height: `${height}%` }}
-                    title={`${h.time}: ${h.total} spettatori`}
+                    title={`${h.time}: ${h.total} viewers`}
                   />
                 </div>
               );
@@ -200,7 +200,7 @@ export default function RealTimePage() {
         </div>
       ) : sortedMetrics.length > 0 ? (
         <Card>
-          <h3 className="mb-4 font-semibold">Video con Spettatori Attivi</h3>
+          <h3 className="mb-4 font-semibold">Videos with Active Viewers</h3>
           <div className="space-y-3">
             {sortedMetrics.map((m) => {
               const video = videos.find((v) => v.id === m.video_id);
@@ -234,8 +234,8 @@ export default function RealTimePage() {
       ) : (
         <EmptyState
           icon={<Radio className="h-8 w-8" />}
-          title="Nessuno spettatore attivo"
-          description="In questo momento non ci sono spettatori che guardano i tuoi video. I dati si aggiornano ogni ~60 secondi."
+          title="No active viewers"
+          description="There are no viewers watching your videos right now. Data refreshes every ~60 seconds."
         />
       )}
     </div>

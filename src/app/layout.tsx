@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Vydalitics AI – Video Analytics Automation",
   description:
-    "SaaS per automatizzare analytics e gestione video con le API di Vidalytics",
+    "SaaS to automate video analytics and management with Vidalytics APIs",
 };
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="it">
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

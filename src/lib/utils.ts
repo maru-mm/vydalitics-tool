@@ -40,11 +40,11 @@ export function getDateRangeDates(range: string): { start_date: string; end_date
 
 export function formatDateShort(dateStr: string): string {
   const d = new Date(dateStr);
-  return d.toLocaleDateString("it-IT", { day: "2-digit", month: "short" });
+  return d.toLocaleDateString("en-US", { day: "2-digit", month: "short" });
 }
 
 export function formatDateLong(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("it-IT", {
+  return new Date(dateStr).toLocaleDateString("en-US", {
     day: "numeric",
     month: "long",
     year: "numeric",

@@ -34,12 +34,12 @@ interface Conversation {
 }
 
 const SUGGESTIONS = [
-  "Quali sono i miei 3 video con piu conversioni?",
-  "Confronta i miei video principali per performance",
-  "Analizza il trend degli ultimi 30 giorni",
-  "Quali segmenti di audience performano meglio?",
-  "Genera un report settimanale delle performance",
-  "Suggeriscimi A/B test basati sui dati attuali",
+  "What are my top 3 videos by conversions?",
+  "Compare my main videos by performance",
+  "Analyze the trend over the last 30 days",
+  "Which audience segments perform best?",
+  "Generate a weekly performance report",
+  "Suggest A/B tests based on current data",
 ];
 
 const STORAGE_KEY = "vydalitics-ai-conversations";
@@ -102,7 +102,7 @@ export default function AIChatPage() {
   const startNewConversation = () => {
     const newConv: Conversation = {
       id: Date.now().toString(),
-      title: "Nuova conversazione",
+      title: "New Conversation",
       messages: [],
       createdAt: new Date().toISOString(),
     };
@@ -173,7 +173,7 @@ export default function AIChatPage() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || `Errore: ${res.status}`);
+        throw new Error(errData.error || `Error: ${res.status}`);
       }
 
       const reader = res.body?.getReader();
@@ -213,7 +213,7 @@ export default function AIChatPage() {
       }
 
       const finalConvId = convId;
-      const assistantMsg: Message = { role: "assistant", content: fullText || "Nessuna risposta ricevuta." };
+      const assistantMsg: Message = { role: "assistant", content: fullText || "No response received." };
       updateConversation(finalConvId, (c) => ({
         ...c,
         messages: [...c.messages, assistantMsg],
@@ -221,7 +221,7 @@ export default function AIChatPage() {
     } catch (err) {
       const errorMsg: Message = {
         role: "assistant",
-        content: `**Errore:** ${err instanceof Error ? err.message : "Errore di connessione al backend AI. Assicurati che il backend Python sia in esecuzione su localhost:8100."}`,
+        content: `**Error:** ${err instanceof Error ? err.message : "Connection error to AI backend. Make sure the Python backend is running on localhost:8100."}`,
       };
       updateConversation(convId!, (c) => ({
         ...c,
@@ -246,7 +246,7 @@ export default function AIChatPage() {
       <div className="flex w-72 shrink-0 flex-col border-r border-border bg-white p-4">
         <Button onClick={startNewConversation} className="mb-4 w-full">
           <MessageSquarePlus className="h-4 w-4" />
-          Nuova Chat
+          New Chat
         </Button>
 
         <div className="flex-1 space-y-1 overflow-y-auto">
@@ -274,7 +274,7 @@ export default function AIChatPage() {
           ))}
           {conversations.length === 0 && (
             <p className="px-3 py-6 text-center text-xs text-muted-foreground">
-              Nessuna conversazione. Inizia una nuova chat!
+              No conversations. Start a new chat!
             </p>
           )}
         </div>
@@ -292,7 +292,7 @@ export default function AIChatPage() {
               }`}
             />
             <span className="text-muted-foreground">
-              Backend AI: {backendStatus === "ok" ? "Connesso" : backendStatus === "error" ? "Non connesso" : "Verifica..."}
+              Backend AI: {backendStatus === "ok" ? "Connected" : backendStatus === "error" ? "Not connected" : "Checking..."}
             </span>
           </div>
         </div>
@@ -308,8 +308,8 @@ export default function AIChatPage() {
             </div>
             <h2 className="mt-6 text-2xl font-bold">Vydalitics AI Analyst</h2>
             <p className="mt-2 max-w-md text-center text-muted-foreground">
-              Il tuo analista AI per video marketing. Chiedi qualsiasi cosa sui tuoi dati Vidalytics,
-              confronta video, analizza trend e ricevi suggerimenti di copywriting.
+              Your AI analyst for video marketing. Ask anything about your Vidalytics data,
+              compare videos, analyze trends, and get copywriting suggestions.
             </p>
 
             <div className="mt-8 grid max-w-2xl gap-3 sm:grid-cols-2">
@@ -326,7 +326,7 @@ export default function AIChatPage() {
             </div>
 
             <Link href="/ai/knowledge" className="mt-6">
-              <Badge variant="info">Carica documenti di copywriting nella Knowledge Base</Badge>
+              <Badge variant="info">Upload copywriting documents to the Knowledge Base</Badge>
             </Link>
           </div>
         ) : (
@@ -378,7 +378,7 @@ export default function AIChatPage() {
                     ) : (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Sto analizzando...
+                        Analyzing...
                       </div>
                     )}
                   </div>
@@ -399,7 +399,7 @@ export default function AIChatPage() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Chiedi qualcosa sui tuoi dati Vidalytics..."
+                placeholder="Ask anything about your Vidalytics data..."
                 rows={1}
                 className="flex-1 resize-none border-0 bg-transparent px-2 py-1.5 text-sm outline-none placeholder:text-muted-foreground"
                 style={{ maxHeight: "120px" }}
@@ -422,7 +422,7 @@ export default function AIChatPage() {
               </Button>
             </div>
             <p className="mt-2 text-center text-xs text-muted-foreground">
-              Vydalitics AI Analyst usa Claude per analizzare i tuoi dati video in tempo reale.
+              Vydalitics AI Analyst uses Claude to analyze your video data in real time.
             </p>
           </div>
         </div>

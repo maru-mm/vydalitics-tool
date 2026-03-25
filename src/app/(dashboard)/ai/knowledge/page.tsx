@@ -39,7 +39,7 @@ const FILE_LABELS: Record<string, string> = {
   ".pdf": "PDF",
   ".csv": "CSV",
   ".json": "JSON",
-  ".txt": "Testo",
+  ".txt": "Text",
   ".md": "Markdown",
 };
 
@@ -130,8 +130,8 @@ export default function KnowledgePage() {
         <div>
           <h1 className="text-2xl font-bold">Knowledge Base</h1>
           <p className="text-muted-foreground">
-            Carica documenti di copywriting, framework, swipe file e dati strutturati.
-            L&apos;AI li usera per analisi e raccomandazioni personalizzate.
+            Upload copywriting documents, frameworks, swipe files, and structured data.
+            The AI will use them for personalized analysis and recommendations.
           </p>
         </div>
       </div>
@@ -144,7 +144,7 @@ export default function KnowledgePage() {
               <BookOpen className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Documenti</p>
+              <p className="text-sm text-muted-foreground">Documents</p>
               <p className="text-2xl font-bold">{documents.length}</p>
             </div>
           </div>
@@ -155,7 +155,7 @@ export default function KnowledgePage() {
               <FileText className="h-5 w-5 text-accent" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Chunk indicizzati</p>
+              <p className="text-sm text-muted-foreground">Indexed Chunks</p>
               <p className="text-2xl font-bold">{totalChunks}</p>
             </div>
           </div>
@@ -166,7 +166,7 @@ export default function KnowledgePage() {
               <CheckCircle className="h-5 w-5 text-success" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Formati supportati</p>
+              <p className="text-sm text-muted-foreground">Supported Formats</p>
               <p className="text-2xl font-bold">PDF, CSV, TXT, MD, JSON</p>
             </div>
           </div>
@@ -199,12 +199,12 @@ export default function KnowledgePage() {
 
         <p className="mt-4 font-medium">
           {uploading
-            ? "Caricamento e indicizzazione in corso..."
+            ? "Uploading and indexing..."
             : uploadResult === "success"
-              ? "File caricato e indicizzato!"
+              ? "File uploaded and indexed!"
               : uploadResult === "error"
-                ? "Errore durante il caricamento"
-                : "Trascina i file qui o clicca per caricare"}
+                ? "Error during upload"
+                : "Drag files here or click to upload"}
         </p>
         <p className="mt-1 text-sm text-muted-foreground">
           PDF, TXT, Markdown, CSV, JSON
@@ -226,7 +226,7 @@ export default function KnowledgePage() {
           disabled={uploading}
         >
           <Upload className="h-4 w-4" />
-          Seleziona File
+          Select File
         </Button>
       </div>
 
@@ -239,7 +239,7 @@ export default function KnowledgePage() {
         </div>
       ) : documents.length > 0 ? (
         <Card>
-          <h3 className="mb-4 font-semibold">Documenti caricati</h3>
+          <h3 className="mb-4 font-semibold">Uploaded Documents</h3>
           <div className="space-y-3">
             {documents.map((doc) => (
               <div
@@ -257,7 +257,7 @@ export default function KnowledgePage() {
                     </Badge>
                     <span className="text-xs text-muted-foreground">
                       {doc.chunks} chunk &middot;{" "}
-                      {new Date(doc.uploaded_at).toLocaleDateString("it-IT", {
+                      {new Date(doc.uploaded_at).toLocaleDateString("en-US", {
                         day: "2-digit",
                         month: "short",
                         year: "numeric",
@@ -284,9 +284,9 @@ export default function KnowledgePage() {
       ) : (
         <Card className="py-8 text-center">
           <BookOpen className="mx-auto h-8 w-8 text-muted-foreground" />
-          <p className="mt-3 font-medium">Nessun documento caricato</p>
+          <p className="mt-3 font-medium">No documents uploaded</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Carica framework di copywriting, swipe file o dati CSV per arricchire le analisi AI.
+            Upload copywriting frameworks, swipe files, or CSV data to enrich AI analysis.
           </p>
         </Card>
       )}

@@ -34,11 +34,11 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
           setAdminSessionPassword(password);
         }
       } else {
-        setError(data.error || "Password errata");
+        setError(data.error || "Wrong password");
         setPassword("");
       }
     } catch {
-      setError("Errore di connessione");
+      setError("Connection error");
     } finally {
       setLoading(false);
     }
@@ -66,7 +66,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             </div>
             <h1 className="text-xl font-bold text-foreground">Vydalitics AI</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Inserisci la password per accedere
+              Enter password to access
             </p>
           </div>
 
@@ -93,7 +93,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
               disabled={loading || !password}
               className="w-full py-3 px-4 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {loading ? "Verifica..." : "Accedi"}
+              {loading ? "Verifying..." : "Sign In"}
             </button>
           </form>
         </div>
