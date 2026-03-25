@@ -14,21 +14,27 @@ import {
   CheckCircle2,
   Video,
   AlertTriangle,
+  Lock,
 } from "lucide-react";
 import type { VidalyticsVideo } from "@/lib/vidalytics-api";
 
 export default function AdminPage() {
   const isAdmin = useAppStore((s) => s.isAdmin);
+  const adminSessionPassword = useAppStore((s) => s.adminSessionPassword);
+  const setAdminSessionPassword = useAppStore((s) => s.setAdminSessionPassword);
   const { apiFetch, isConfigured } = useApi();
 
   const [videos, setVideos] = useState<VidalyticsVideo[]>([]);
   const [videosLoading, setVideosLoading] = useState(true);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+  const [originalHiddenIds, setOriginalHiddenIds] = useState<Set<string>>(new Set());
   const [configLoading, setConfigLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [needsPassword, setNeedsPassword] = useState(false);
 
   useEffect(() => {
     if (!isConfigured) return;
@@ -45,7 +51,9 @@ export default function AdminPage() {
       .then((r) => r.json())
       .then((data) => {
         if (data.hiddenVideoIds) {
-          setHiddenIds(new Set(data.hiddenVideoIds));
+          const ids = new Set<string>(data.hiddenVideoIds);
+          setHiddenIds(ids);
+          setOriginalHiddenIds(ids);
         }
       })
       .catch(() => {})
@@ -61,6 +69,14 @@ export default function AdminPage() {
     );
   }, [videos, searchQuery]);
 
+  const hasChanges = useMemo(() => {
+    if (hiddenIds.size !== originalHiddenIds.size) return true;
+    for (const id of hiddenIds) {
+      if (!originalHiddenIds.has(id)) return true;
+    }
+    return false;
+  }, [hiddenIds, originalHiddenIds]);
+
   const toggleVideo = (id: string) => {
     setSaved(false);
     setHiddenIds((prev) => {
@@ -74,37 +90,56 @@ export default function AdminPage() {
     });
   };
 
-  const handleSave = async () => {
+  const doSave = async (pw: string) => {
     setSaving(true);
     setError(null);
     try {
-      const adminPassword = prompt("Inserisci la password admin per confermare:");
-      if (!adminPassword) {
-        setSaving(false);
-        return;
-      }
-
       const res = await fetch("/api/admin/vsl-config", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-admin-password": adminPassword,
+          "x-admin-password": pw,
         },
         body: JSON.stringify({ hiddenVideoIds: Array.from(hiddenIds) }),
       });
+
+      if (res.status === 403) {
+        setAdminSessionPassword(null);
+        setNeedsPassword(true);
+        setError("Password admin non valida. Reinseriscila.");
+        return;
+      }
 
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || "Errore nel salvataggio");
       }
 
+      setOriginalHiddenIds(new Set(hiddenIds));
+      setNeedsPassword(false);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Errore nel salvataggio");
+      if (!error) setError(e instanceof Error ? e.message : "Errore nel salvataggio");
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleSave = async () => {
+    if (adminSessionPassword) {
+      await doSave(adminSessionPassword);
+    } else {
+      setNeedsPassword(true);
+    }
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordInput) return;
+    setAdminSessionPassword(passwordInput);
+    await doSave(passwordInput);
+    setPasswordInput("");
   };
 
   if (!isAdmin) {
@@ -129,7 +164,6 @@ export default function AdminPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-3 mb-1">
@@ -141,18 +175,18 @@ export default function AdminPage() {
             </h1>
           </div>
           <p className="text-sm text-muted-foreground ml-[52px]">
-            Scegli quali VSL rendere visibili nel tool di analisi
+            Scegli quali VSL rendere visibili nel menu &quot;Seleziona Video&quot;
           </p>
         </div>
 
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || !hasChanges}
           className={cn(
             "flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium transition-all",
             saved
               ? "bg-green-500/10 text-green-600"
-              : "bg-primary text-primary-foreground hover:bg-primary-hover"
+              : "bg-primary text-primary-foreground hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed"
           )}
         >
           {saving ? (
@@ -162,7 +196,7 @@ export default function AdminPage() {
           ) : (
             <Save className="h-4 w-4" />
           )}
-          {saving ? "Salvataggio..." : saved ? "Salvato" : "Salva configurazione"}
+          {saving ? "Salvataggio..." : saved ? "Salvato!" : "Salva configurazione"}
         </button>
       </div>
 
@@ -173,7 +207,31 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* Stats */}
+      {needsPassword && (
+        <form
+          onSubmit={handlePasswordSubmit}
+          className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3"
+        >
+          <Lock className="h-4 w-4 text-primary shrink-0" />
+          <span className="text-sm text-foreground font-medium">Password Admin:</span>
+          <input
+            type="password"
+            value={passwordInput}
+            onChange={(e) => setPasswordInput(e.target.value)}
+            placeholder="Inserisci password admin"
+            autoFocus
+            className="flex-1 rounded-lg border border-border bg-white px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <button
+            type="submit"
+            disabled={!passwordInput || saving}
+            className="rounded-lg bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-hover disabled:opacity-50 transition-colors"
+          >
+            {saving ? "Salvataggio..." : "Conferma e Salva"}
+          </button>
+        </form>
+      )}
+
       <div className="grid grid-cols-3 gap-4">
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="text-2xl font-bold text-foreground">{videos.length}</div>
@@ -184,7 +242,7 @@ export default function AdminPage() {
             <Eye className="h-4 w-4 text-green-500" />
             <span className="text-2xl font-bold text-green-600">{visibleCount}</span>
           </div>
-          <div className="text-xs text-muted-foreground mt-1">Visibili</div>
+          <div className="text-xs text-muted-foreground mt-1">Visibili nel tool</div>
         </div>
         <div className="rounded-xl border border-border bg-card p-4">
           <div className="flex items-center gap-2">
@@ -195,7 +253,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
@@ -207,7 +264,6 @@ export default function AdminPage() {
         />
       </div>
 
-      {/* Video List */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-16">
           <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
@@ -247,7 +303,7 @@ export default function AdminPage() {
                 <div className="flex-1 min-w-0">
                   <p className={cn(
                     "text-sm font-medium truncate",
-                    isHidden ? "text-muted-foreground" : "text-foreground"
+                    isHidden ? "text-muted-foreground line-through" : "text-foreground"
                   )}>
                     {v.name || v.title || "Video senza nome"}
                   </p>
@@ -262,7 +318,7 @@ export default function AdminPage() {
                   className={cn(
                     "flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-medium transition-all",
                     isHidden
-                      ? "bg-secondary text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                      ? "bg-secondary text-muted-foreground hover:bg-green-500/10 hover:text-green-600"
                       : "bg-green-500/10 text-green-600 hover:bg-danger/10 hover:text-danger"
                   )}
                 >
@@ -281,6 +337,18 @@ export default function AdminPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {hasChanges && !saving && (
+        <div className="sticky bottom-6 flex justify-center animate-fade-in">
+          <button
+            onClick={handleSave}
+            className="flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-lg hover:bg-primary-hover transition-all hover:scale-105"
+          >
+            <Save className="h-4 w-4" />
+            Salva modifiche ({Math.abs(hiddenIds.size - originalHiddenIds.size)} cambiate)
+          </button>
         </div>
       )}
     </div>

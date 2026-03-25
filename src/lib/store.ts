@@ -10,6 +10,9 @@ interface AppState {
   isAdmin: boolean;
   setAdmin: (v: boolean) => void;
 
+  adminSessionPassword: string | null;
+  setAdminSessionPassword: (pw: string | null) => void;
+
   apiToken: string | null;
   setApiToken: (token: string | null) => void;
 
@@ -43,6 +46,9 @@ export const useAppStore = create<AppState>()(
 
       isAdmin: false,
       setAdmin: (v) => set({ isAdmin: v }),
+
+      adminSessionPassword: null,
+      setAdminSessionPassword: (pw) => set({ adminSessionPassword: pw }),
 
       apiToken: null,
       setApiToken: (token) => set({ apiToken: token }),
