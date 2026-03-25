@@ -60,7 +60,7 @@ const segmentLabels: Record<SegmentType, string> = {
 };
 
 export default function AnalyticsPage() {
-  const { apiToken, dateRange, setDateRange } = useAppStore();
+  const { apiToken, dateRange, setDateRange, isAdmin } = useAppStore();
   const { apiFetch } = useApi();
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -121,9 +121,9 @@ export default function AnalyticsPage() {
     ])
       .then(([allFolders, config]) => {
         const allowed: string[] = config.allowedFolderIds || [];
-        const visibleFolders = allowed.length > 0
-          ? allFolders.filter((f: Folder) => allowed.includes(f.id))
-          : allFolders;
+        const visibleFolders = isAdmin
+          ? allFolders
+          : allFolders.filter((f: Folder) => allowed.includes(f.id));
         setFolders(visibleFolders);
         if (visibleFolders.length > 0 && !selectedFolderId) {
           setSelectedFolderId(visibleFolders[0].id);
@@ -131,7 +131,7 @@ export default function AnalyticsPage() {
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiToken]);
+  }, [apiToken, isAdmin]);
 
   useEffect(() => {
     if (!selectedFolderId) return;

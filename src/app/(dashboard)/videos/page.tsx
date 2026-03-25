@@ -53,7 +53,7 @@ interface VideoWithStats extends VidalyticsVideo {
 }
 
 export default function VideosPage() {
-  const { apiToken, selectedFolderId, setSelectedFolderId, dateRange } = useAppStore();
+  const { apiToken, selectedFolderId, setSelectedFolderId, dateRange, isAdmin } = useAppStore();
   const { apiFetch } = useApi();
   const [videos, setVideos] = useState<VideoWithStats[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -95,16 +95,47 @@ export default function VideosPage() {
   const [scriptError, setScriptError] = useState<string | null>(null);
   const [scriptCopied, setScriptCopied] = useState(false);
 
+  const [allowedFolderIds, setAllowedFolderIds] = useState<string[]>([]);
+
   useEffect(() => {
-    apiFetch<Folder[]>("/folders").then(setFolders).catch(() => {});
-  }, [apiToken, apiFetch]);
+    Promise.all([
+      apiFetch<Folder[]>("/folders"),
+      fetch("/api/admin/vsl-config").then((r) => r.json()).catch(() => ({ allowedFolderIds: [] })),
+    ])
+      .then(([allFolders, config]) => {
+        const allowed: string[] = config.allowedFolderIds || [];
+        setAllowedFolderIds(allowed);
+        const visibleFolders = (!isAdmin && allowed.length > 0)
+          ? allFolders.filter((f: Folder) => allowed.includes(f.id))
+          : allFolders;
+        setFolders(visibleFolders);
+        if (!isAdmin && allowed.length > 0 && !selectedFolderId) {
+          setSelectedFolderId(visibleFolders[0]?.id ?? null);
+        }
+      })
+      .catch(() => {});
+  }, [apiToken, apiFetch, isAdmin]);
 
   useEffect(() => {
     setLoading(true);
     const params: Record<string, string> = {};
-    if (selectedFolderId) params.folder_id = selectedFolderId;
+    if (selectedFolderId) {
+      params.folder_id = selectedFolderId;
+    }
 
-    apiFetch<VidalyticsVideo[]>("/videos", { params })
+    const fetchForFolder = (folderId: string | null) => {
+      const p: Record<string, string> = {};
+      if (folderId) p.folder_id = folderId;
+      return apiFetch<VidalyticsVideo[]>("/videos", { params: p });
+    };
+
+    const shouldRestrictAll = !isAdmin && allowedFolderIds.length > 0 && !selectedFolderId;
+
+    const videoPromise = shouldRestrictAll
+      ? Promise.all(allowedFolderIds.map((fid) => fetchForFolder(fid))).then((results) => results.flat())
+      : fetchForFolder(selectedFolderId);
+
+    videoPromise
       .then((vids) => {
         setVideos(vids);
         setLoading(false);
@@ -127,7 +158,7 @@ export default function VideosPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [apiToken, apiFetch, selectedFolderId]);
+  }, [apiToken, apiFetch, selectedFolderId, isAdmin, allowedFolderIds]);
 
   // Embed code with options
   const handleGetEmbed = async (videoId: string) => {
@@ -364,17 +395,19 @@ export default function VideosPage() {
 
       {folders.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setSelectedFolderId(null)}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              !selectedFolderId
-                ? "bg-primary text-white"
-                : "border border-border text-muted-foreground hover:bg-secondary"
-            }`}
-          >
-            <FolderOpen className="h-3.5 w-3.5" />
-            All
-          </button>
+          {(isAdmin || allowedFolderIds.length === 0) && (
+            <button
+              onClick={() => setSelectedFolderId(null)}
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                !selectedFolderId
+                  ? "bg-primary text-white"
+                  : "border border-border text-muted-foreground hover:bg-secondary"
+              }`}
+            >
+              <FolderOpen className="h-3.5 w-3.5" />
+              All
+            </button>
+          )}
           {folders.map((f) => (
             <button
               key={f.id}

@@ -36,7 +36,7 @@ import type {
 import type { DateRange } from "@/lib/store";
 
 export default function DashboardPage() {
-  const { apiToken, dateRange, setDateRange } = useAppStore();
+  const { apiToken, dateRange, setDateRange, isAdmin } = useAppStore();
   const { apiFetch } = useApi();
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -54,9 +54,9 @@ export default function DashboardPage() {
     ])
       .then(([allFolders, config]) => {
         const allowed: string[] = config.allowedFolderIds || [];
-        const visibleFolders = allowed.length > 0
-          ? allFolders.filter((f: Folder) => allowed.includes(f.id))
-          : allFolders;
+        const visibleFolders = isAdmin
+          ? allFolders
+          : allFolders.filter((f: Folder) => allowed.includes(f.id));
         setFolders(visibleFolders);
         if (visibleFolders.length > 0 && !selectedFolderId) {
           setSelectedFolderId(visibleFolders[0].id);
@@ -64,7 +64,7 @@ export default function DashboardPage() {
       })
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiToken]);
+  }, [apiToken, isAdmin]);
 
   const fetchData = async (folderId: string | null, showLoader = true) => {
     if (!folderId) return;

@@ -650,6 +650,7 @@ export default function VSLAnalysisPage({
 } = {}) {
   const { dateRange } = useAppStore();
   const { apiFetch, isConfigured } = useApi();
+  const isAdmin = useAppStore((s) => s.isAdmin);
 
   // Video selection
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -712,9 +713,9 @@ export default function VSLAnalysisPage({
         const allowed: string[] = config.allowedFolderIds || [];
         setAllowedFolderIds(allowed);
 
-        const visibleFolders = allowed.length > 0
-          ? allFolders.filter((f: Folder) => allowed.includes(f.id))
-          : allFolders;
+        const visibleFolders = isAdmin
+          ? allFolders
+          : allFolders.filter((f: Folder) => allowed.includes(f.id));
 
         setFolders(visibleFolders);
 
@@ -724,7 +725,7 @@ export default function VSLAnalysisPage({
       })
       .catch(() => {})
       .finally(() => setVideosLoading(false));
-  }, [apiFetch, isConfigured]);
+  }, [apiFetch, isConfigured, isAdmin]);
 
   // ─── Load videos when folder changes ───────────────────────────────
 

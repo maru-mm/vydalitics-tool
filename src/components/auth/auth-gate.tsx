@@ -32,6 +32,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
         if (data.role === "admin") {
           setAdmin(true);
           setAdminSessionPassword(password);
+        } else {
+          setAdmin(false);
+          setAdminSessionPassword(null);
         }
       } else {
         setError(data.error || "Wrong password");
