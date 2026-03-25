@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { useApi } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
-import { Bell, Search, Gauge, AlertTriangle } from "lucide-react";
+import { Gauge, AlertTriangle, LogOut, Activity } from "lucide-react";
 
 export function Header() {
-  const sidebarOpen = useAppStore((s) => s.sidebarOpen);
   const apiToken = useAppStore((s) => s.apiToken);
+  const setAuthenticated = useAppStore((s) => s.setAuthenticated);
   const { apiFetch } = useApi();
   const [accountInfo, setAccountInfo] = useState<{
     plan: string;
@@ -36,25 +36,17 @@ export function Header() {
   const isCritical = usagePercent >= 95;
 
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-white/80 px-6 backdrop-blur-sm transition-all duration-300",
-        sidebarOpen ? "ml-64" : "ml-[72px]"
-      )}
-    >
-      <div className="flex items-center gap-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Cerca video, analytics..."
-            className="h-9 w-64 rounded-lg border border-border bg-secondary pl-10 pr-4 text-sm outline-none transition-all placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
-          />
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-white/80 px-6 backdrop-blur-sm">
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary">
+          <Activity className="h-5 w-5 text-white" />
         </div>
+        <span className="text-lg font-bold tracking-tight">
+          Vydalitics AI
+        </span>
       </div>
 
       <div className="flex items-center gap-3">
-        {/* API Usage Indicator */}
         {accountInfo && (
           <div
             className={cn(
@@ -87,11 +79,14 @@ export function Header() {
           </div>
         )}
 
-        <button className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent" />
+        <button
+          onClick={() => setAuthenticated(false)}
+          className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          title="Esci"
+        >
+          <LogOut className="h-4 w-4" />
+          Esci
         </button>
-        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-accent" />
       </div>
     </header>
   );
