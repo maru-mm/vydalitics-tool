@@ -2,14 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   const { password } = await req.json();
-  const correct = process.env.APP_PASSWORD;
+  const appPassword = process.env.APP_PASSWORD;
+  const adminPassword = process.env.ADMIN_PASSWORD;
 
-  if (!correct) {
-    return NextResponse.json({ ok: true });
+  if (!appPassword) {
+    return NextResponse.json({ ok: true, role: "user" });
   }
 
-  if (password === correct) {
-    return NextResponse.json({ ok: true });
+  if (adminPassword && password === adminPassword) {
+    return NextResponse.json({ ok: true, role: "admin" });
+  }
+
+  if (password === appPassword) {
+    return NextResponse.json({ ok: true, role: "user" });
   }
 
   return NextResponse.json({ ok: false, error: "Password errata" }, { status: 401 });

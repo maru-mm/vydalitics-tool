@@ -7,8 +7,14 @@ interface AppState {
   isAuthenticated: boolean;
   setAuthenticated: (v: boolean) => void;
 
+  isAdmin: boolean;
+  setAdmin: (v: boolean) => void;
+
   apiToken: string | null;
   setApiToken: (token: string | null) => void;
+
+  serverTokenAvailable: boolean;
+  setServerTokenAvailable: (v: boolean) => void;
 
   openaiApiKey: string | null;
   setOpenaiApiKey: (key: string | null) => void;
@@ -33,10 +39,16 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       isAuthenticated: false,
-      setAuthenticated: (v) => set({ isAuthenticated: v }),
+      setAuthenticated: (v) => set({ isAuthenticated: v, ...(!v ? { isAdmin: false } : {}) }),
+
+      isAdmin: false,
+      setAdmin: (v) => set({ isAdmin: v }),
 
       apiToken: null,
       setApiToken: (token) => set({ apiToken: token }),
+
+      serverTokenAvailable: false,
+      setServerTokenAvailable: (v) => set({ serverTokenAvailable: v }),
 
       openaiApiKey: null,
       setOpenaiApiKey: (key) => set({ openaiApiKey: key }),
@@ -61,6 +73,7 @@ export const useAppStore = create<AppState>()(
       name: "vydalitics-ai-storage",
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
+        isAdmin: state.isAdmin,
         apiToken: state.apiToken,
         openaiApiKey: state.openaiApiKey,
         dateRange: state.dateRange,

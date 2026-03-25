@@ -652,6 +652,7 @@ export default function VSLAnalysisPage({
   // Video selection
   const [videos, setVideos] = useState<VidalyticsVideo[]>([]);
   const [videosLoading, setVideosLoading] = useState(true);
+  const [hiddenVideoIds, setHiddenVideoIds] = useState<Set<string>>(new Set());
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showVideoSelector, setShowVideoSelector] = useState(false);
@@ -698,8 +699,16 @@ export default function VSLAnalysisPage({
   useEffect(() => {
     if (!isConfigured) return;
     setVideosLoading(true);
-    apiFetch<VidalyticsVideo[]>("/videos")
-      .then(setVideos)
+
+    Promise.all([
+      apiFetch<VidalyticsVideo[]>("/videos"),
+      fetch("/api/admin/vsl-config").then((r) => r.json()).catch(() => ({ hiddenVideoIds: [] })),
+    ])
+      .then(([allVideos, config]) => {
+        const hidden = new Set<string>(config.hiddenVideoIds || []);
+        setHiddenVideoIds(hidden);
+        setVideos(allVideos.filter((v: VidalyticsVideo) => !hidden.has(v.id)));
+      })
       .catch(() => {})
       .finally(() => setVideosLoading(false));
   }, [apiFetch, isConfigured]);

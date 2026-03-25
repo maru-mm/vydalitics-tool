@@ -6,6 +6,7 @@ import { useAppStore } from "@/lib/store";
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
   const setAuthenticated = useAppStore((s) => s.setAuthenticated);
+  const setAdmin = useAppStore((s) => s.setAdmin);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,6 +28,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
       if (data.ok) {
         setAuthenticated(true);
+        if (data.role === "admin") {
+          setAdmin(true);
+        }
       } else {
         setError(data.error || "Password errata");
         setPassword("");

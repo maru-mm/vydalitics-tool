@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useAppStore } from "@/lib/store";
 import { useApi } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
-import { Gauge, AlertTriangle, LogOut, Activity } from "lucide-react";
+import { Gauge, AlertTriangle, LogOut, Activity, Shield } from "lucide-react";
 
 const navItems = [
   { href: "/vsl-analysis", label: "MW VSL Complete" },
@@ -16,7 +16,9 @@ const navItems = [
 export function Header() {
   const pathname = usePathname();
   const apiToken = useAppStore((s) => s.apiToken);
+  const serverTokenAvailable = useAppStore((s) => s.serverTokenAvailable);
   const setAuthenticated = useAppStore((s) => s.setAuthenticated);
+  const isAdmin = useAppStore((s) => s.isAdmin);
   const { apiFetch } = useApi();
   const [accountInfo, setAccountInfo] = useState<{
     plan: string;
@@ -25,7 +27,7 @@ export function Header() {
   } | null>(null);
 
   useEffect(() => {
-    if (!apiToken) return;
+    if (!apiToken && !serverTokenAvailable) return;
     apiFetch<{
       plan: string;
       api_requests_used: number;
@@ -35,7 +37,7 @@ export function Header() {
       .then(setAccountInfo)
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [apiToken]);
+  }, [apiToken, serverTokenAvailable]);
 
   const usagePercent = accountInfo
     ? Math.round((accountInfo.api_requests_used / accountInfo.api_requests_limit) * 100)
@@ -107,6 +109,22 @@ export function Header() {
               <span>{usagePercent}%</span>
             </div>
           </div>
+        )}
+
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className={cn(
+              "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+              pathname === "/admin"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+            )}
+            title="Pannello Admin"
+          >
+            <Shield className="h-4 w-4" />
+            Admin
+          </Link>
         )}
 
         <button

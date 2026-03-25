@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppStore } from "@/lib/store";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 type FetchOptions = RequestInit & {
   params?: Record<string, string>;
@@ -29,9 +29,26 @@ async function fetchWithRetry(
   throw new Error("Request failed");
 }
 
+let serverTokenChecked = false;
+
 export function useApi() {
   const apiToken = useAppStore((s) => s.apiToken);
   const openaiApiKey = useAppStore((s) => s.openaiApiKey);
+  const serverTokenAvailable = useAppStore((s) => s.serverTokenAvailable);
+  const setServerTokenAvailable = useAppStore((s) => s.setServerTokenAvailable);
+
+  useEffect(() => {
+    if (serverTokenChecked || apiToken) return;
+    serverTokenChecked = true;
+    fetch("/api/config/status")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.vidalyticsConfigured) {
+          setServerTokenAvailable(true);
+        }
+      })
+      .catch(() => {});
+  }, [apiToken, setServerTokenAvailable]);
 
   const apiFetch = useCallback(
     async <T>(endpoint: string, options: FetchOptions = {}): Promise<T> => {
@@ -69,5 +86,5 @@ export function useApi() {
     [apiToken, openaiApiKey]
   );
 
-  return { apiFetch, isConfigured: !!apiToken };
+  return { apiFetch, isConfigured: !!apiToken || serverTokenAvailable };
 }
