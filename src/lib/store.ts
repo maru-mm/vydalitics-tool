@@ -42,7 +42,7 @@ export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
       isAuthenticated: false,
-      setAuthenticated: (v) => set({ isAuthenticated: v, ...(!v ? { isAdmin: false } : {}) }),
+      setAuthenticated: (v) => set({ isAuthenticated: v, ...(!v ? { isAdmin: false, adminSessionPassword: null } : {}) }),
 
       isAdmin: false,
       setAdmin: (v) => set({ isAdmin: v }),

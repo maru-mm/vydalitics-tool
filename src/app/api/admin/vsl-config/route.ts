@@ -1,75 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
-
-const CONFIG_PATH = path.join(process.cwd(), "data", "vsl-config.json");
-const BLOB_KEY = "vsl-config.json";
-
-interface VslConfig {
-  allowedFolderIds: string[];
-  hiddenVideoIds: string[];
-}
-
-function useBlob(): boolean {
-  return !!process.env.BLOB_READ_WRITE_TOKEN;
-}
-
-async function readConfigFromBlob(): Promise<VslConfig> {
-  const { list } = await import("@vercel/blob");
-  const { blobs } = await list({ prefix: BLOB_KEY, limit: 1 });
-  if (blobs.length > 0) {
-    const response = await fetch(blobs[0].url);
-    return await response.json();
-  }
-  return { allowedFolderIds: [], hiddenVideoIds: [] };
-}
-
-async function writeConfigToBlob(config: VslConfig): Promise<void> {
-  const { put } = await import("@vercel/blob");
-  await put(BLOB_KEY, JSON.stringify(config), {
-    access: "public",
-    addRandomSuffix: false,
-  });
-}
-
-async function readConfigFromFile(): Promise<VslConfig> {
-  try {
-    const raw = await fs.readFile(CONFIG_PATH, "utf-8");
-    return JSON.parse(raw);
-  } catch {
-    return { allowedFolderIds: [], hiddenVideoIds: [] };
-  }
-}
-
-async function writeConfigToFile(config: VslConfig): Promise<void> {
-  await fs.mkdir(path.dirname(CONFIG_PATH), { recursive: true });
-  await fs.writeFile(CONFIG_PATH, JSON.stringify(config, null, 2), "utf-8");
-}
-
-async function readConfig(): Promise<VslConfig> {
-  try {
-    if (useBlob()) return await readConfigFromBlob();
-    return await readConfigFromFile();
-  } catch {
-    return { allowedFolderIds: [], hiddenVideoIds: [] };
-  }
-}
-
-async function writeConfig(config: VslConfig): Promise<void> {
-  if (useBlob()) return await writeConfigToBlob(config);
-  return await writeConfigToFile(config);
-}
+import { getSupabase } from "@/lib/supabase";
 
 function isAdminRequest(req: NextRequest): boolean {
   const adminPassword = process.env.ADMIN_PASSWORD;
   if (!adminPassword) return false;
-  const authHeader = req.headers.get("x-admin-password");
-  return authHeader === adminPassword;
+  return req.headers.get("x-admin-password") === adminPassword;
+}
+
+async function readAllowedFolders(): Promise<string[]> {
+  const sb = getSupabase();
+  if (!sb) return [];
+
+  const { data, error } = await sb
+    .from("app_config")
+    .select("value")
+    .eq("key", "allowed_folder_ids")
+    .single();
+
+  if (error || !data) return [];
+  return Array.isArray(data.value) ? data.value : [];
+}
+
+async function writeAllowedFolders(ids: string[]): Promise<void> {
+  const sb = getSupabase();
+  if (!sb) throw new Error("Supabase not configured");
+
+  const { error } = await sb
+    .from("app_config")
+    .upsert({ key: "allowed_folder_ids", value: ids }, { onConflict: "key" });
+
+  if (error) throw new Error(`Supabase write error: ${error.message}`);
 }
 
 export async function GET() {
-  const config = await readConfig();
-  return NextResponse.json(config);
+  try {
+    const allowedFolderIds = await readAllowedFolders();
+    return NextResponse.json({ allowedFolderIds });
+  } catch {
+    return NextResponse.json({ allowedFolderIds: [] });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -79,20 +48,19 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const existing = await readConfig();
+    const { allowedFolderIds } = body;
 
-    const config: VslConfig = {
-      allowedFolderIds: Array.isArray(body.allowedFolderIds)
-        ? body.allowedFolderIds
-        : existing.allowedFolderIds || [],
-      hiddenVideoIds: Array.isArray(body.hiddenVideoIds)
-        ? body.hiddenVideoIds
-        : existing.hiddenVideoIds || [],
-    };
+    if (!Array.isArray(allowedFolderIds)) {
+      return NextResponse.json(
+        { error: "allowedFolderIds must be an array" },
+        { status: 400 }
+      );
+    }
 
-    await writeConfig(config);
-    return NextResponse.json({ ok: true, config });
-  } catch {
-    return NextResponse.json({ error: "Error saving" }, { status: 500 });
+    await writeAllowedFolders(allowedFolderIds);
+    return NextResponse.json({ ok: true, allowedFolderIds });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Error saving";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

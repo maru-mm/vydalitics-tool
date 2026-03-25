@@ -28,7 +28,6 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       const data = await res.json();
 
       if (data.ok) {
-        setAuthenticated(true);
         if (data.role === "admin") {
           setAdmin(true);
           setAdminSessionPassword(password);
@@ -36,6 +35,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
           setAdmin(false);
           setAdminSessionPassword(null);
         }
+        setAuthenticated(true);
       } else {
         setError(data.error || "Wrong password");
         setPassword("");
