@@ -1,12 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { useAppStore } from "@/lib/store";
 import { useApi } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 import { Gauge, AlertTriangle, LogOut, Activity } from "lucide-react";
 
+const navItems = [
+  { href: "/vsl-analysis", label: "MW VSL Complete" },
+  { href: "/upsell-analysis", label: "MW Upsell 1 Digital" },
+];
+
 export function Header() {
+  const pathname = usePathname();
   const apiToken = useAppStore((s) => s.apiToken);
   const setAuthenticated = useAppStore((s) => s.setAuthenticated);
   const { apiFetch } = useApi();
@@ -37,13 +45,35 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-white/80 px-6 backdrop-blur-sm">
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary">
-          <Activity className="h-5 w-5 text-white" />
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary">
+            <Activity className="h-5 w-5 text-white" />
+          </div>
+          <span className="text-lg font-bold tracking-tight">
+            Vydalitics AI
+          </span>
         </div>
-        <span className="text-lg font-bold tracking-tight">
-          Vydalitics AI
-        </span>
+
+        <nav className="flex items-center gap-1">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                )}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
 
       <div className="flex items-center gap-3">

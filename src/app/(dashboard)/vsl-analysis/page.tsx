@@ -639,7 +639,13 @@ function VideoFramePreview({
 
 // ─── Main Page ───────────────────────────────────────────────────────
 
-export default function VSLAnalysisPage() {
+export default function VSLAnalysisPage({
+  pageTitle = "Analisi Profonda VSL",
+  pageSubtitle = "Drop-off, frame analysis (Gemini) e suggerimenti (Claude) in una vista unica",
+}: {
+  pageTitle?: string;
+  pageSubtitle?: string;
+} = {}) {
   const { dateRange } = useAppStore();
   const { apiFetch, isConfigured } = useApi();
 
@@ -1109,11 +1115,10 @@ export default function VSLAnalysisPage() {
         </div>
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            Analisi Profonda VSL
+            {pageTitle}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Drop-off, frame analysis (Gemini) e suggerimenti (Claude) in una
-            vista unica
+            {pageSubtitle}
           </p>
         </div>
       </div>
