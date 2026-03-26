@@ -77,12 +77,18 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: "vydalitics-ai-storage",
+      version: 2,
       partialize: (state) => ({
         isAuthenticated: state.isAuthenticated,
-        isAdmin: state.isAdmin,
         apiToken: state.apiToken,
         openaiApiKey: state.openaiApiKey,
         dateRange: state.dateRange,
+      }),
+      merge: (persisted, current) => ({
+        ...current,
+        ...(persisted as Partial<AppState>),
+        isAdmin: false,
+        adminSessionPassword: null,
       }),
     }
   )
