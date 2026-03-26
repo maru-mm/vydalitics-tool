@@ -9,7 +9,6 @@ function isAdminRequest(req: NextRequest): boolean {
 
 async function readAllowedFolders(): Promise<string[]> {
   const sb = getSupabase();
-  if (!sb) return [];
 
   const { data, error } = await sb
     .from("app_config")
@@ -23,7 +22,6 @@ async function readAllowedFolders(): Promise<string[]> {
 
 async function writeAllowedFolders(ids: string[]): Promise<void> {
   const sb = getSupabase();
-  if (!sb) throw new Error("Supabase not configured");
 
   const { error } = await sb
     .from("app_config")
@@ -36,7 +34,8 @@ export async function GET() {
   try {
     const allowedFolderIds = await readAllowedFolders();
     return NextResponse.json({ allowedFolderIds });
-  } catch {
+  } catch (e) {
+    console.error("[vsl-config GET]", e);
     return NextResponse.json({ allowedFolderIds: [] });
   }
 }
@@ -60,6 +59,7 @@ export async function POST(req: NextRequest) {
     await writeAllowedFolders(allowedFolderIds);
     return NextResponse.json({ ok: true, allowedFolderIds });
   } catch (e) {
+    console.error("[vsl-config POST]", e);
     const msg = e instanceof Error ? e.message : "Error saving";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
