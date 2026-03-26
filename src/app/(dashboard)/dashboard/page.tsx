@@ -43,11 +43,13 @@ export default function DashboardPage() {
   const [videos, setVideos] = useState<VidalyticsVideo[]>([]);
   const [stats, setStats] = useState<VideoStats[]>([]);
   const [timeline, setTimeline] = useState<TimelineStats[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [foldersLoading, setFoldersLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setFoldersLoading(true);
     Promise.all([
       apiFetch<Folder[]>("/folders"),
       fetch("/api/admin/vsl-config").then((r) => r.json()).catch(() => ({ allowedFolderIds: [] })),
@@ -58,24 +60,24 @@ export default function DashboardPage() {
           ? allFolders
           : allFolders.filter((f: Folder) => allowed.includes(f.id));
         setFolders(visibleFolders);
-        if (visibleFolders.length > 0 && !selectedFolderId) {
+        if (visibleFolders.length > 0) {
           setSelectedFolderId(visibleFolders[0].id);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setFoldersLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [apiToken, isAdmin]);
 
   const fetchData = async (folderId: string | null, showLoader = true) => {
     if (!folderId) return;
-    if (showLoader) setLoading(true);
+    if (showLoader) setDataLoading(true);
     else setRefreshing(true);
     setError(null);
 
     try {
       const vids = await apiFetch<VidalyticsVideo[]>(`/videos?folder_id=${folderId}`);
       setVideos(vids);
-      setLoading(false);
 
       if (vids.length > 0) {
         const topIds = vids.slice(0, 10).map((v) => v.id);
@@ -99,7 +101,7 @@ export default function DashboardPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Connection error");
     } finally {
-      setLoading(false);
+      setDataLoading(false);
       setRefreshing(false);
     }
   };
@@ -108,6 +110,8 @@ export default function DashboardPage() {
     if (selectedFolderId) fetchData(selectedFolderId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFolderId, dateRange]);
+
+  const loading = foldersLoading || dataLoading;
 
   const chartTimeline = useMemo(
     () =>
