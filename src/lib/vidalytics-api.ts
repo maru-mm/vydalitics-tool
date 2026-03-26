@@ -401,13 +401,12 @@ export class VidalyticsClient {
     page?: number;
     per_page?: number;
   }): Promise<VidalyticsVideo[]> {
-    const qs = new URLSearchParams();
-    if (params?.folder_id) qs.set("folderId", params.folder_id);
-    const query = qs.toString();
-    const rawList = await this.requestData<Record<string, unknown>[]>(
-      `/video${query ? `?${query}` : ""}`
-    );
-    return (rawList || []).map(normalizeVideo);
+    const rawList = await this.requestData<Record<string, unknown>[]>("/video");
+    const all = (rawList || []).map(normalizeVideo);
+    if (params?.folder_id) {
+      return all.filter((v) => v.folder_id === params.folder_id);
+    }
+    return all;
   }
 
   async getVideo(id: string): Promise<VidalyticsVideo> {
