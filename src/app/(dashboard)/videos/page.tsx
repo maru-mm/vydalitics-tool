@@ -53,7 +53,7 @@ interface VideoWithStats extends VidalyticsVideo {
 }
 
 export default function VideosPage() {
-  const { apiToken, selectedFolderId, setSelectedFolderId, dateRange, isAdmin } = useAppStore();
+  const { apiToken, selectedFolderId, setSelectedFolderId, dateRange } = useAppStore();
   const { apiFetch } = useApi();
   const [videos, setVideos] = useState<VideoWithStats[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -105,16 +105,16 @@ export default function VideosPage() {
       .then(([allFolders, config]) => {
         const allowed: string[] = config.allowedFolderIds || [];
         setAllowedFolderIds(allowed);
-        const visibleFolders = (!isAdmin && allowed.length > 0)
+        const visibleFolders = allowed.length > 0
           ? allFolders.filter((f: Folder) => allowed.includes(f.id))
           : allFolders;
         setFolders(visibleFolders);
-        if (!isAdmin && allowed.length > 0 && !selectedFolderId) {
+        if (allowed.length > 0 && !selectedFolderId) {
           setSelectedFolderId(visibleFolders[0]?.id ?? null);
         }
       })
       .catch(() => {});
-  }, [apiToken, apiFetch, isAdmin]);
+  }, [apiToken, apiFetch]);
 
   useEffect(() => {
     setLoading(true);
@@ -129,7 +129,7 @@ export default function VideosPage() {
       return apiFetch<VidalyticsVideo[]>("/videos", { params: p });
     };
 
-    const shouldRestrictAll = !isAdmin && allowedFolderIds.length > 0 && !selectedFolderId;
+    const shouldRestrictAll = allowedFolderIds.length > 0 && !selectedFolderId;
 
     const videoPromise = shouldRestrictAll
       ? Promise.all(allowedFolderIds.map((fid) => fetchForFolder(fid))).then((results) => results.flat())
@@ -158,7 +158,7 @@ export default function VideosPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [apiToken, apiFetch, selectedFolderId, isAdmin, allowedFolderIds]);
+  }, [apiToken, apiFetch, selectedFolderId, allowedFolderIds]);
 
   // Embed code with options
   const handleGetEmbed = async (videoId: string) => {
@@ -395,7 +395,7 @@ export default function VideosPage() {
 
       {folders.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {(isAdmin || allowedFolderIds.length === 0) && (
+          {allowedFolderIds.length === 0 && (
             <button
               onClick={() => setSelectedFolderId(null)}
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
