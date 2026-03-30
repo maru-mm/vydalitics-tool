@@ -9,6 +9,7 @@ import {
   formatDuration,
   getDateRangeDates,
   formatDateShort,
+  computeAvgWatchTime,
 } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -53,7 +54,7 @@ interface VideoWithStats extends VidalyticsVideo {
 }
 
 export default function VideosPage() {
-  const { apiToken, selectedFolderId, setSelectedFolderId, dateRange } = useAppStore();
+  const { apiToken, selectedFolderId, setSelectedFolderId, dateRange, customStartDate, customEndDate } = useAppStore();
   const { apiFetch } = useApi();
   const [videos, setVideos] = useState<VideoWithStats[]>([]);
   const [folders, setFolders] = useState<Folder[]>([]);
@@ -197,7 +198,7 @@ export default function VideosPage() {
     }
     setExpandedVideo(videoId);
     setTimelineLoading(true);
-    const dates = getDateRangeDates(dateRange);
+    const dates = getDateRangeDates(dateRange, customStartDate, customEndDate);
     try {
       const data = await apiFetch<TimelineStats[]>(`/videos/${videoId}/timeline`, {
         params: { ...dates, interval: "daily" },
@@ -495,7 +496,7 @@ export default function VideosPage() {
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <Clock className="h-3.5 w-3.5" /> Watch
                         </div>
-                        <p className="font-semibold">{formatDuration(video.stats.avg_watch_time)}</p>
+                        <p className="font-semibold">{formatDuration(computeAvgWatchTime(video.stats.avg_watch_time, video.stats.avg_percent_watched, video.duration))}</p>
                       </div>
                       <div className="text-center">
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">

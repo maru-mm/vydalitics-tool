@@ -9,6 +9,7 @@ import {
   formatDuration,
   getDateRangeDates,
   formatDateShort,
+  computeAvgWatchTime,
 } from "@/lib/utils";
 import { StatCard } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -33,10 +34,10 @@ import type {
   TimelineStats,
   Folder,
 } from "@/lib/vidalytics-api";
-import type { DateRange } from "@/lib/store";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 export default function DashboardPage() {
-  const { apiToken, dateRange, setDateRange } = useAppStore();
+  const { apiToken, dateRange, customStartDate, customEndDate } = useAppStore();
   const { apiFetch } = useApi();
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -91,7 +92,7 @@ export default function DashboardPage() {
 
         apiFetch<TimelineStats[]>(`/videos/${vids[0].id}/timeline`, {
           params: {
-            ...getDateRangeDates(dateRange),
+            ...getDateRangeDates(dateRange, customStartDate, customEndDate),
             interval: "daily",
           },
         })
@@ -109,7 +110,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (selectedFolderId) fetchData(selectedFolderId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedFolderId, dateRange]);
+  }, [selectedFolderId, dateRange, customStartDate, customEndDate]);
 
   const loading = foldersLoading || dataLoading;
 
@@ -186,7 +187,10 @@ export default function DashboardPage() {
   const totalImpressions = stats.reduce((a, s) => a + (s.impressions || 0), 0);
   const avgWatchTime =
     stats.length > 0
-      ? stats.reduce((a, s) => a + (s.avg_watch_time || 0), 0) / stats.length
+      ? stats.reduce((a, s) => {
+          const vid = videos.find((v) => v.id === s.video_id);
+          return a + computeAvgWatchTime(s.avg_watch_time, s.avg_percent_watched, vid?.duration);
+        }, 0) / stats.length
       : 0;
   const avgConvRate =
     stats.length > 0
@@ -195,11 +199,6 @@ export default function DashboardPage() {
   const totalCTAClicks = stats.reduce((a, s) => a + (s.cta_clicks || 0), 0);
 
   const hasData = videos.length > 0;
-  const ranges: { label: string; value: DateRange }[] = [
-    { label: "7D", value: "7d" },
-    { label: "14D", value: "14d" },
-    { label: "30D", value: "30d" },
-  ];
 
   return (
     <div className="space-y-6">
@@ -233,21 +232,7 @@ export default function DashboardPage() {
               </select>
             </div>
           )}
-          <div className="flex rounded-lg border border-border bg-white">
-            {ranges.map((r) => (
-              <button
-                key={r.value}
-                onClick={() => setDateRange(r.value)}
-                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                  dateRange === r.value
-                    ? "bg-primary text-white"
-                    : "text-muted-foreground hover:text-foreground"
-                } first:rounded-l-lg last:rounded-r-lg`}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
+          <DateRangePicker />
           <Button
             variant="ghost"
             size="sm"

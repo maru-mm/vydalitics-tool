@@ -36,7 +36,7 @@ import type {
 import type { DateRange } from "@/lib/store";
 
 export default function SessionsPage() {
-  const { apiToken, dateRange, setDateRange } = useAppStore();
+  const { apiToken, dateRange, setDateRange, customStartDate, customEndDate } = useAppStore();
   const { apiFetch } = useApi();
   const [videos, setVideos] = useState<VidalyticsVideo[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
@@ -67,7 +67,7 @@ export default function SessionsPage() {
     if (!selectedVideoId) return;
     setLoading(true);
     setPage(1);
-    const dates = getDateRangeDates(dateRange);
+    const dates = getDateRangeDates(dateRange, customStartDate, customEndDate);
 
     const params: Record<string, string> = {
       ...dates,
@@ -91,7 +91,7 @@ export default function SessionsPage() {
   const loadPage = async (newPage: number) => {
     if (!selectedVideoId) return;
     setLoading(true);
-    const dates = getDateRangeDates(dateRange);
+    const dates = getDateRangeDates(dateRange, customStartDate, customEndDate);
     const params: Record<string, string> = {
       ...dates,
       page: String(newPage),

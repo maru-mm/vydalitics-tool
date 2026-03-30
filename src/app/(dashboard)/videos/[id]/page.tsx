@@ -10,6 +10,8 @@ import {
   formatDuration,
   formatDateShort,
   getDateRangeDates,
+  computeAvgWatchTime,
+  estimateDurationFromDropOff,
 } from "@/lib/utils";
 import { Card, StatCard } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -69,7 +71,7 @@ export default function VideoBreakdownPage() {
   const params = useParams();
   const router = useRouter();
   const videoId = params.id as string;
-  const { dateRange } = useAppStore();
+  const { dateRange, customStartDate, customEndDate } = useAppStore();
   const { apiFetch, isConfigured } = useApi();
 
   const [video, setVideo] = useState<VidalyticsVideo | null>(null);
@@ -89,7 +91,7 @@ export default function VideoBreakdownPage() {
     if (!videoId || !isConfigured) return;
 
     setLoading(true);
-    const dates = getDateRangeDates(dateRange);
+    const dates = getDateRangeDates(dateRange, customStartDate, customEndDate);
 
     Promise.allSettled([
       apiFetch<VidalyticsVideo>(`/videos/${videoId}`),
@@ -317,7 +319,7 @@ export default function VideoBreakdownPage() {
           />
           <StatCard
             label="Avg Watch Time"
-            value={formatDuration(stats.avg_watch_time)}
+            value={formatDuration(computeAvgWatchTime(stats.avg_watch_time, stats.avg_percent_watched, video?.duration || estimateDurationFromDropOff(dropOff?.watches)))}
             change={`${formatPercent(stats.avg_percent_watched)} of video`}
             changeType={stats.avg_percent_watched > 0.4 ? "positive" : stats.avg_percent_watched > 0.2 ? "neutral" : "negative"}
             icon={<Clock className="h-5 w-5 text-primary" />}

@@ -14,6 +14,8 @@ export async function GET(
   const url = new URL(req.url);
   try {
     const stats = await client.getVideoStats(id, {
+      dateFrom: url.searchParams.get("dateFrom") || undefined,
+      dateTo: url.searchParams.get("dateTo") || undefined,
       country: url.searchParams.get("country") || undefined,
       device: url.searchParams.get("device") || undefined,
       browser: url.searchParams.get("browser") || undefined,

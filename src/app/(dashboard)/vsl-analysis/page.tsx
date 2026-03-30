@@ -7,6 +7,9 @@ import {
   formatNumber,
   formatPercent,
   formatDuration,
+  getDateRangeDates,
+  computeAvgWatchTime,
+  estimateDurationFromDropOff,
   cn,
 } from "@/lib/utils";
 import { Card, StatCard } from "@/components/ui/card";
@@ -60,6 +63,7 @@ import type {
   TranscriptSegment,
   Folder,
 } from "@/lib/vidalytics-api";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -648,7 +652,7 @@ export default function VSLAnalysisPage({
   pageTitle?: string;
   pageSubtitle?: string;
 } = {}) {
-  const { dateRange } = useAppStore();
+  const { dateRange, customStartDate, customEndDate } = useAppStore();
   const { apiFetch, isConfigured } = useApi();
 
   // Video selection
@@ -777,10 +781,13 @@ export default function VSLAnalysisPage({
     setStreamUrl(null);
     setSelectedDrop(null);
 
+    const dates = getDateRangeDates(dateRange, customStartDate, customEndDate);
+    const dateQS = `dateFrom=${dates.dateFrom}&dateTo=${dates.dateTo}`;
+
     Promise.allSettled([
       apiFetch<VidalyticsVideo>(`/videos/${selectedVideoId}`),
-      apiFetch<VideoStats>(`/videos/${selectedVideoId}/stats`),
-      apiFetch<DropOffStats>(`/videos/${selectedVideoId}/drop-off`),
+      apiFetch<VideoStats>(`/videos/${selectedVideoId}/stats?${dateQS}`),
+      apiFetch<DropOffStats>(`/videos/${selectedVideoId}/drop-off?${dateQS}`),
       apiFetch<{ text: string; segments: TranscriptSegment[]; source?: string }>(
         `/videos/${selectedVideoId}/script`
       ),
@@ -806,7 +813,7 @@ export default function VSLAnalysisPage({
     )
       .then((res) => setStreamUrl(res.hlsUrl))
       .catch(() => {});
-  }, [selectedVideoId, apiFetch, isConfigured, dateRange]);
+  }, [selectedVideoId, apiFetch, isConfigured, dateRange, customStartDate, customEndDate]);
 
   // ─── Drop-off processing ────────────────────────────────────────
 
@@ -924,6 +931,12 @@ export default function VSLAnalysisPage({
       };
     });
   }, [sampledDropOff, computedCriticalDrops]);
+
+  const resolvedAvgWatchTime = useMemo(() => {
+    if (!stats) return 0;
+    const videoDuration = video?.duration || estimateDurationFromDropOff(dropOff?.watches);
+    return computeAvgWatchTime(stats.avg_watch_time, stats.avg_percent_watched, videoDuration);
+  }, [stats, video, dropOff]);
 
   // ─── Analysis orchestration ──────────────────────────────────────
 
@@ -1144,18 +1157,21 @@ export default function VSLAnalysisPage({
   return (
     <div className="space-y-6">
       {/* ── Header ──────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3">
-        <div className="rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 p-2.5">
-          <Microscope className="h-6 w-6 text-primary" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl bg-gradient-to-br from-primary/20 to-accent/20 p-2.5">
+            <Microscope className="h-6 w-6 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {pageTitle}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {pageSubtitle}
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {pageTitle}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {pageSubtitle}
-          </p>
-        </div>
+        <DateRangePicker />
       </div>
 
       {/* ── Video Selector ──────────────────────────────────────── */}
@@ -1337,7 +1353,7 @@ export default function VSLAnalysisPage({
             />
             <StatCard
               label="Avg watch time"
-              value={formatDuration(stats.avg_watch_time)}
+              value={formatDuration(resolvedAvgWatchTime)}
               change={`Play Rate: ${formatPercent(stats.play_rate)}`}
               icon={<Clock className="h-5 w-5 text-primary" />}
             />

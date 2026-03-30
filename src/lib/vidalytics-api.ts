@@ -197,7 +197,7 @@ function normalizeVideo(raw: Record<string, unknown>): VidalyticsVideo {
     status: raw.status as string | undefined,
     views: raw.views as number | undefined,
     url: raw.url as string | undefined,
-    duration: undefined,
+    duration: (raw.duration as number) || (raw.length as number) || (raw.durationInSeconds as number) || undefined,
     tags: [],
     embed_id: undefined,
     funnel_id: undefined,
@@ -453,7 +453,7 @@ export class VidalyticsClient {
       unique_plays: (raw.playsUnique as number) || 0,
       impressions: (raw.impressions as number) || 0,
       play_rate: (raw.playRate as number) || 0,
-      avg_watch_time: (raw.avgWatchTime as number) || 0,
+      avg_watch_time: (raw.avgWatchTime as number) || (raw.watchTime as number) || (raw.averageWatchTime as number) || 0,
       avg_percent_watched: (raw.avgPercentWatched as number) || (raw.engagement as number) || 0,
       conversions: (raw.conversionCount as number) || (raw.conversions as number) || 0,
       conversion_rate: (raw.conversionRate as number) || 0,
@@ -474,7 +474,7 @@ export class VidalyticsClient {
   ): Promise<TimelineStats[]> {
     const qs = new URLSearchParams();
     qs.set("videoGuids", id);
-    qs.set("metrics", "plays,impressions,conversions");
+    qs.set("metrics", "plays,impressions,conversions,engagement");
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     qs.set("dateFrom", params?.start_date || sevenDaysAgo.toISOString().split("T")[0]);
@@ -496,8 +496,8 @@ export class VidalyticsClient {
         unique_plays: metrics.playsUnique || 0,
         impressions: metrics.impressions || 0,
         conversions: metrics.conversions || 0,
-        avg_watch_time: metrics.avgWatchTime || 0,
-        avg_percent_watched: metrics.avgPercentWatched || 0,
+        avg_watch_time: metrics.avgWatchTime || metrics.watchTime || metrics.averageWatchTime || 0,
+        avg_percent_watched: metrics.avgPercentWatched || metrics.engagement || 0,
         cta_clicks: metrics.ctaClicks || 0,
       };
     });

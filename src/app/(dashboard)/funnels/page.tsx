@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAppStore } from "@/lib/store";
 import { useApi } from "@/lib/hooks";
-import { formatNumber, formatPercent, formatDuration } from "@/lib/utils";
+import { formatNumber, formatPercent, formatDuration, computeAvgWatchTime } from "@/lib/utils";
 import { Card, StatCard } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -225,7 +225,7 @@ export default function FunnelsPage() {
                                   </div>
                                   <div className="flex items-center gap-1 text-muted-foreground">
                                     <Clock className="h-3 w-3" />
-                                    {formatDuration(videoStats.avg_watch_time)}
+                                    {formatDuration(computeAvgWatchTime(videoStats.avg_watch_time, videoStats.avg_percent_watched, video.duration))}
                                   </div>
                                   <div className="flex items-center gap-1 text-muted-foreground">
                                     <TrendingUp className="h-3 w-3" />

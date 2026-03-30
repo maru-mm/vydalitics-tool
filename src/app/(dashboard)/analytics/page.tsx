@@ -9,6 +9,7 @@ import {
   formatDuration,
   getDateRangeDates,
   formatDateShort,
+  computeAvgWatchTime,
 } from "@/lib/utils";
 import { Card, StatCard } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,7 @@ import type {
   SegmentedStats,
   Folder,
 } from "@/lib/vidalytics-api";
-import type { DateRange } from "@/lib/store";
+import { DateRangePicker } from "@/components/ui/date-range-picker";
 
 type SegmentType = "country" | "device" | "browser" | "os";
 
@@ -60,7 +61,7 @@ const segmentLabels: Record<SegmentType, string> = {
 };
 
 export default function AnalyticsPage() {
-  const { apiToken, dateRange, setDateRange } = useAppStore();
+  const { apiToken, dateRange, customStartDate, customEndDate } = useAppStore();
   const { apiFetch } = useApi();
   const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -149,7 +150,7 @@ export default function AnalyticsPage() {
   useEffect(() => {
     if (!selectedVideoId) return;
     setLoading(true);
-    const dates = getDateRangeDates(dateRange);
+    const dates = getDateRangeDates(dateRange, customStartDate, customEndDate);
     const filterParams = buildFilterParams();
 
     Promise.all([
@@ -167,12 +168,12 @@ export default function AnalyticsPage() {
       .catch(() => {})
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedVideoId, dateRange, apiToken, filterCountry, filterDevice, filterBrowser, filterOs, filterReferrer, filterUrlParam, filterUrlParamValue]);
+  }, [selectedVideoId, dateRange, apiToken, customStartDate, customEndDate, filterCountry, filterDevice, filterBrowser, filterOs, filterReferrer, filterUrlParam, filterUrlParamValue]);
 
   useEffect(() => {
     if (!selectedVideoId) return;
     setLoadingSegments(true);
-    const dates = getDateRangeDates(dateRange);
+    const dates = getDateRangeDates(dateRange, customStartDate, customEndDate);
     apiFetch<SegmentedStats[]>(`/videos/${selectedVideoId}/segments`, {
       params: { segment: segmentType, ...dates },
     })
@@ -180,7 +181,7 @@ export default function AnalyticsPage() {
       .catch(() => setSegments([]))
       .finally(() => setLoadingSegments(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedVideoId, segmentType, dateRange, apiToken]);
+  }, [selectedVideoId, segmentType, dateRange, apiToken, customStartDate, customEndDate]);
 
   const handleExportStats = () => {
     if (!stats || !selectedVideoId) return;
@@ -225,12 +226,6 @@ export default function AnalyticsPage() {
     a.click();
     URL.revokeObjectURL(url);
   };
-
-  const ranges: { label: string; value: DateRange }[] = [
-    { label: "7D", value: "7d" },
-    { label: "14D", value: "14d" },
-    { label: "30D", value: "30d" },
-  ];
 
   const chartTimeline = timeline.map((t) => ({
     name: formatDateShort(t.date),
@@ -287,21 +282,7 @@ export default function AnalyticsPage() {
               </option>
             ))}
           </select>
-          <div className="flex rounded-lg border border-border bg-white">
-            {ranges.map((r) => (
-              <button
-                key={r.value}
-                onClick={() => setDateRange(r.value)}
-                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                  dateRange === r.value
-                    ? "bg-primary text-white"
-                    : "text-muted-foreground hover:text-foreground"
-                } first:rounded-l-lg last:rounded-r-lg`}
-              >
-                {r.label}
-              </button>
-            ))}
-          </div>
+          <DateRangePicker />
           <Button
             variant={showFilters ? "primary" : "ghost"}
             size="sm"
@@ -451,7 +432,7 @@ export default function AnalyticsPage() {
         />
         <StatCard
           label="Avg Watch Time"
-            value={formatDuration(stats.avg_watch_time)}
+            value={formatDuration(computeAvgWatchTime(stats.avg_watch_time, stats.avg_percent_watched, videos.find((v) => v.id === selectedVideoId)?.duration))}
             icon={<Clock className="h-5 w-5 text-primary" />}
           />
           <StatCard

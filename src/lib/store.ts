@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export type DateRange = "7d" | "14d" | "30d" | "custom";
+export type DateRange = "today" | "yesterday" | "7d" | "14d" | "30d" | "90d" | "custom";
 
 interface AppState {
   isAuthenticated: boolean;
